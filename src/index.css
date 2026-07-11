@@ -341,3 +341,8 @@ button {
 .share-button:hover {
   border-color: var(--color-accent);
 }
+
+/* 共有シートのみのとき（タッチデバイス）は1つのボタンを全幅にする */
+.share-buttons > :only-child {
+  grid-column: 1 / -1;
+}

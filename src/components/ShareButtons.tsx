@@ -25,6 +25,13 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
     },
   );
 
+  // スマホ等のタッチデバイスは OS の共有シートに一本化し、
+  // PC では X / LINE / mixi の intent リンクを並べる
+  const isTouchDevice = matchMedia(
+    "(hover: none) and (pointer: coarse)",
+  ).matches;
+  const useShareSheet = isTouchDevice && typeof navigator.share === "function";
+
   async function shareViaSheet() {
     try {
       const files = cardRef.current
@@ -48,6 +55,16 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
       // 画像生成や transient activation 切れで失敗したら text + url に縮退
       await navigator.share({ text, url: shareUrl }).catch(() => {});
     }
+  }
+
+  if (useShareSheet) {
+    return (
+      <div className="share-buttons">
+        <button type="button" className="share-button" onClick={shareViaSheet}>
+          シェアする
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -76,11 +93,6 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
       >
         mixi でシェア
       </a>
-      {typeof navigator.share === "function" && (
-        <button type="button" className="share-button" onClick={shareViaSheet}>
-          その他のアプリで共有
-        </button>
-      )}
     </div>
   );
 }
