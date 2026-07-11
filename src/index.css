@@ -450,3 +450,29 @@ button {
   font-size: 0.95rem;
   line-height: 1.6;
 }
+
+/* PC のホバー詳細説明ツールチップ */
+.flavor-tooltip {
+  position: fixed;
+  z-index: 10;
+  max-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 16px rgb(59 42 32 / 20%);
+  pointer-events: none;
+}
+
+.flavor-tooltip-heading {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.flavor-tooltip-description {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}

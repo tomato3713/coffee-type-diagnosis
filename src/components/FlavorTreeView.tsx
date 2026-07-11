@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FLAVOR_TREE } from "../data/flavorTree";
+import { isTouchDevice } from "../logic/device";
 import { type LaidOutNode, layoutFlavorTree } from "../logic/flavorTreeLayout";
 import type { FlavorCategoryId } from "../types";
 import { FlavorNodeDetailModal } from "./FlavorNodeDetailModal";
+import { FlavorNodeTooltip } from "./FlavorNodeTooltip";
 
 interface Props {
   highlightIds?: FlavorCategoryId[];
@@ -25,6 +27,7 @@ const DEFAULT_VIEW: ViewTransform = { x: 0, y: 0, k: 0.55 };
 const EDGE_PAD = 10;
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOLERANCE = 8;
+const HOVER_DELAY_MS = 400;
 // この距離を超えて動いて初めてドラッグ（パン）とみなし、それまでは
 // pointer capture を張らずクリックがノードにそのまま届くようにする
 const DRAG_THRESHOLD = 4;
@@ -80,13 +83,22 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     () => layoutFlavorTree(FLAVOR_TREE, highlightIds),
     [highlightIds],
   );
+  // タッチ端末は長押しで、PC はホバーで詳細説明を出す
+  const touchDevice = useMemo(() => isTouchDevice(), []);
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const [view, setView] = useState<ViewTransform>(DEFAULT_VIEW);
   // クリックで選択中のノード（中心に拡大表示し、強調リングを出す）
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  // 長押しで詳細説明モーダルを開くノード
+  // 長押しで詳細説明モーダルを開くノード（タッチデバイスのみ）
   const [describedNode, setDescribedNode] = useState<LaidOutNode | null>(null);
+  // PC でホバーしたときに詳細説明を出すノード
+  const [hover, setHover] = useState<{
+    node: LaidOutNode;
+    x: number;
+    y: number;
+  } | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // ポインタ操作の作業領域（再レンダリング不要な値）
   const pointers = useRef(new Map<number, PointerState>());
   const longPress = useRef<{
@@ -200,6 +212,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     focusInitial();
     setSelectedIndex(null);
     setDescribedNode(null);
+    setHover(null);
   }, [focusInitial]);
 
   // React の onWheel は passive なため、preventDefault できるよう直接登録する
@@ -219,7 +232,8 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
-  // 長押し判定: pointerdown から一定時間、大きく動かず離されなければ発火する
+  // 長押し判定（タッチデバイスのみ）: pointerdown から一定時間、
+  // 大きく動かず離されなければ発火する
   const clearLongPressTimer = useCallback(() => {
     if (longPress.current.timer) clearTimeout(longPress.current.timer);
     longPress.current.timer = null;
@@ -227,6 +241,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
 
   const startLongPress = useCallback(
     (node: LaidOutNode, e: React.PointerEvent) => {
+      if (!touchDevice) return;
       clearLongPressTimer();
       const timer = setTimeout(() => {
         longPress.current.triggered = true;
@@ -240,8 +255,34 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
         triggered: false,
       };
     },
-    [clearLongPressTimer],
+    [clearLongPressTimer, touchDevice],
   );
+
+  // ホバー判定（PC のみ）: マウスがノード上に留まったら詳細説明を出す
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
+  }, []);
+
+  const startHover = useCallback(
+    (node: LaidOutNode, x: number, y: number) => {
+      if (touchDevice) return;
+      clearHoverTimer();
+      hoverTimer.current = setTimeout(
+        () => setHover({ node, x, y }),
+        HOVER_DELAY_MS,
+      );
+    },
+    [clearHoverTimer, touchDevice],
+  );
+
+  const endHover = useCallback(() => {
+    clearHoverTimer();
+    setHover(null);
+  }, [clearHoverTimer]);
+
+  // アンマウント時にホバーの遅延タイマーが残らないようにする
+  useEffect(() => () => clearHoverTimer(), [clearHoverTimer]);
 
   function onPointerDown(e: React.PointerEvent) {
     // ここでは pointer capture を張らない。単純なクリックまで巻き込むと、
@@ -435,12 +476,25 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                   cursor="pointer"
                   role="button"
                   tabIndex={0}
-                  aria-label={`${node.label} を中心に拡大表示（長押しで説明を表示）`}
+                  aria-label={
+                    touchDevice
+                      ? `${node.label} を中心に拡大表示（長押しで説明を表示）`
+                      : `${node.label} を中心に拡大表示（ホバーで説明を表示）`
+                  }
                   onPointerDown={(e) => startLongPress(node, e)}
                   onClick={() => selectNode(index, node)}
                   onKeyDown={(e) =>
                     e.key === "Enter" && selectNode(index, node)
                   }
+                  onMouseEnter={(e) =>
+                    startHover(node, e.clientX + 14, e.clientY + 14)
+                  }
+                  onMouseLeave={endHover}
+                  onFocus={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setHover({ node, x: rect.right + 8, y: rect.top });
+                  }}
+                  onBlur={endHover}
                 >
                   {/* タップしやすいよう見た目より広い透明な当たり判定 */}
                   <circle r={14} fill="transparent" />
@@ -555,6 +609,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
         node={describedNode}
         onClose={() => setDescribedNode(null)}
       />
+      {hover && <FlavorNodeTooltip node={hover.node} x={hover.x} y={hover.y} />}
     </div>
   );
 }
