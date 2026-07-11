@@ -11,13 +11,21 @@ export const SCA_WHEEL_CATEGORIES = [
   "ロースト (Roasted)",
 ] as const;
 
-// 得票の同数時は定義順が優先される（上にあるほど優先）
+// 得票の同数時は定義順が優先される（上にあるほど優先）。
+// 深掘り質問で1票しか得られない分類（芳醇・ワイニー系、ロースト系）は
+// 同点で埋もれないよう前方に置いている
 export const FLAVOR_CATEGORIES: FlavorCategory[] = [
   {
     id: "floral",
     wheelCategory: "花 (Floral)",
     label: "フローラル",
     notes: ["ジャスミン", "カモミール", "ローズ"],
+  },
+  {
+    id: "dried-fermented",
+    wheelCategory: "酸味・発酵 (Sour/Fermented)",
+    label: "芳醇・ワイニー系",
+    notes: ["レーズン", "プルーン", "赤ワインのような風味"],
   },
   {
     id: "berry",
@@ -38,16 +46,16 @@ export const FLAVOR_CATEGORIES: FlavorCategory[] = [
     notes: ["マンゴー", "パイナップル", "ピーチ"],
   },
   {
-    id: "dried-fermented",
-    wheelCategory: "酸味・発酵 (Sour/Fermented)",
-    label: "芳醇・ワイニー系",
-    notes: ["レーズン", "プルーン", "赤ワインのような風味"],
-  },
-  {
     id: "nutty",
     wheelCategory: "ナッティ・ココア (Nutty/Cocoa)",
     label: "ナッツ系",
     notes: ["アーモンド", "ヘーゼルナッツ", "ピーナッツ"],
+  },
+  {
+    id: "roast",
+    wheelCategory: "ロースト (Roasted)",
+    label: "ロースト系",
+    notes: ["香ばしい穀物", "スモーキー", "カラメリゼ"],
   },
   {
     id: "cocoa",
@@ -66,12 +74,6 @@ export const FLAVOR_CATEGORIES: FlavorCategory[] = [
     wheelCategory: "スパイス (Spices)",
     label: "スパイス系",
     notes: ["シナモン", "クローブ", "ナツメグ"],
-  },
-  {
-    id: "roast",
-    wheelCategory: "ロースト (Roasted)",
-    label: "ロースト系",
-    notes: ["香ばしい穀物", "スモーキー", "カラメリゼ"],
   },
 ];
 
