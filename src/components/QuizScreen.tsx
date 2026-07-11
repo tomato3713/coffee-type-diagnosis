@@ -32,7 +32,12 @@ export function QuizScreen({ onComplete }: Props) {
 
   return (
     <div className="quiz">
-      {/* 深掘り質問数は分岐で変わるため、件数表示は出さずバーのみで進捗を示す */}
+      {/* 深掘り質問数は分岐で変わるため、件数表示はせず段階だけを示す */}
+      <p className="quiz-stage">
+        {flavorQuestions
+          ? "好みを深掘りしています"
+          : "基本的な好みをきいています"}
+      </p>
       <progress
         className="quiz-progress"
         value={progress.value}
