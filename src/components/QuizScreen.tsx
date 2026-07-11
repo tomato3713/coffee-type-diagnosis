@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
 import { flavorBranch } from "../logic/diagnose";
+import { quizProgress } from "../logic/quizProgress";
 
 interface Props {
   onComplete: (baseAnswers: number[], flavorAnswers: number[]) => void;
@@ -17,8 +18,7 @@ export function QuizScreen({ onComplete }: Props) {
   const question = flavorQuestions
     ? flavorQuestions[flavorAnswers.length]
     : QUESTIONS[baseAnswers.length];
-  const total = QUESTIONS.length + 3;
-  const current = baseAnswers.length + flavorAnswers.length;
+  const progress = quizProgress(baseAnswers, flavorAnswers);
 
   function select(index: number) {
     if (flavorQuestions) {
@@ -32,13 +32,17 @@ export function QuizScreen({ onComplete }: Props) {
 
   return (
     <div className="quiz">
-      <p className="quiz-progress-label">
-        Q{current + 1} <span>/ {total}</span>
-        {inFlavorStage && (
-          <span className="quiz-stage">フレーバー深掘り中</span>
-        )}
+      {/* 深掘り質問数は分岐で変わるため、件数表示はせず段階だけを示す */}
+      <p className="quiz-stage">
+        {flavorQuestions
+          ? "好みを深掘りしています"
+          : "基本的な好みをきいています"}
       </p>
-      <progress className="quiz-progress" value={current} max={total} />
+      <progress
+        className="quiz-progress"
+        value={progress.value}
+        max={progress.max}
+      />
       <h1 className="quiz-question">{question.text}</h1>
       <div className="quiz-choices">
         {question.choices.map((choice, i) => (

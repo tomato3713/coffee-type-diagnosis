@@ -14,16 +14,31 @@ export interface Question {
 export type FlavorBranch = "fruity" | "nutty";
 
 export type FlavorCategoryId =
+  // 花 (Floral)
   | "floral"
+  | "black-tea"
+  // 果実 (Fruity)
   | "berry"
+  | "dried-fruit"
+  | "other-fruit"
   | "citrus"
-  | "tropical"
-  | "dried-fermented"
+  // 酸味・発酵 (Sour/Fermented)
+  | "sour"
+  | "fermented"
+  // ロースト (Roasted)
+  | "tobacco"
+  | "burnt"
+  | "cereal"
+  // スパイス (Spices)
+  | "pungent"
+  | "brown-spice"
+  // ナッティ・ココア (Nutty/Cocoa)
   | "nutty"
   | "cocoa"
-  | "sweet"
-  | "spice"
-  | "roast";
+  // 甘味 (Sweet)
+  | "brown-sugar"
+  | "vanilla"
+  | "sweet";
 
 // SCA フレーバーホイール（2016年版）上の位置。大分類 → 中分類 → 具体ノート
 export interface FlavorCategory {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RESULT_TYPES } from "../data/results";
+import { FLAVOR_QUESTIONS } from "../data/questions";
+import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
 import {
   buildResultHash,
   buildShareText,
@@ -28,7 +29,7 @@ describe("encodeShareQuery / decodeShareQuery", () => {
 
   it("全16タイプの id がラウンドトリップできる", () => {
     for (const typeId of Object.keys(RESULT_TYPES)) {
-      const result: SharedResult = { typeId, flavorIds: ["roast"] };
+      const result: SharedResult = { typeId, flavorIds: ["burnt"] };
       expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
     }
   });
@@ -60,20 +61,26 @@ describe("encodeShareQuery / decodeShareQuery", () => {
     expect(decodeShareQuery("")).toBeNull();
   });
 
-  it("flavorId が3個までなら受理される", () => {
-    expect(
-      decodeShareQuery("t=acid-light-fruity-straight&f=floral,berry,citrus"),
-    ).toEqual({
+  // フレーバー深掘り質問数が最も多い分岐（質問数）が上限になる
+  const maxFlavorIds = Math.max(
+    ...Object.values(FLAVOR_QUESTIONS).map((questions) => questions.length),
+  );
+
+  it("flavorId が質問数の上限までなら受理される", () => {
+    const flavorIds = FLAVOR_CATEGORIES.slice(0, maxFlavorIds).map((c) => c.id);
+    const result: SharedResult = {
       typeId: "acid-light-fruity-straight",
-      flavorIds: ["floral", "berry", "citrus"],
-    });
+      flavorIds,
+    };
+    expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
   });
 
-  it("flavorId が4個以上または重複していると null になる", () => {
+  it("flavorId が質問数の上限を超える、または重複していると null になる", () => {
+    const tooMany = FLAVOR_CATEGORIES.slice(0, maxFlavorIds + 1).map(
+      (c) => c.id,
+    );
     expect(
-      decodeShareQuery(
-        "t=acid-light-fruity-straight&f=floral,berry,citrus,tropical",
-      ),
+      decodeShareQuery(`t=acid-light-fruity-straight&f=${tooMany.join(",")}`),
     ).toBeNull();
     expect(
       decodeShareQuery("t=acid-light-fruity-straight&f=floral,floral"),

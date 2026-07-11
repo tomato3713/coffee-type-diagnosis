@@ -15,7 +15,7 @@ export const 診断結果: Story = {
       id: "entry-1",
       diagnosedAt: "2026-07-11T09:00:00.000Z",
       typeId: "acid-rich-fruity-milk",
-      flavorIds: ["dried-fermented", "berry"],
+      flavorIds: ["fermented", "berry"],
       baseAnswers: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
       flavorAnswers: [0, 1, 0],
     },
