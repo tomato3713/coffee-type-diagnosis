@@ -46,10 +46,13 @@ export function ResultCard({ type, flavors, diagnosedAt, ref }: Props) {
         </p>
       </section>
       <footer className="result-card-footer">
-        <span>コーヒータイプ診断</span>
-        <time dateTime={diagnosedAt}>
-          {new Date(diagnosedAt).toLocaleDateString("ja-JP")}
-        </time>
+        <div className="result-card-footer-row">
+          <span>コーヒータイプ診断</span>
+          <time dateTime={diagnosedAt}>
+            {new Date(diagnosedAt).toLocaleDateString("ja-JP")}
+          </time>
+        </div>
+        <p className="result-card-url">{`${location.origin}${import.meta.env.BASE_URL}`}</p>
       </footer>
     </div>
   );
