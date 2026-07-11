@@ -1,9 +1,12 @@
+import { FLAVOR_QUESTIONS } from "../data/questions";
 import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
 import type { FlavorCategoryId } from "../types";
 
-// フレーバー深掘り質問は分岐ごとに3問（各1票）なので、結果に出る
-// フレーバー分類は最大3件になる
-const MAX_FLAVOR_IDS = 3;
+// フレーバー深掘り質問は各1票なので、結果に出るフレーバー分類は
+// 質問数が最も多い分岐の問題数を超えない
+const MAX_FLAVOR_IDS = Math.max(
+  ...Object.values(FLAVOR_QUESTIONS).map((questions) => questions.length),
+);
 
 export interface SharedResult {
   typeId: string;

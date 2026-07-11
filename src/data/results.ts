@@ -11,10 +11,10 @@ export const SCA_WHEEL_CATEGORIES = [
   "ロースト (Roasted)",
 ] as const;
 
-// 得票の同数時は定義順が優先される（上にあるほど優先）。
-// 深掘り質問で1票しか得られない分類（芳醇・ワイニー系、ロースト系）は
-// 同点で埋もれないよう前方に置いている
+// SCA フレーバーホイールの実際の中分類にほぼ準拠した18分類。
+// 診断結果は得票のあった分類をすべて返すため、順序は表示順の目安でしかない
 export const FLAVOR_CATEGORIES: FlavorCategory[] = [
+  // 花 (Floral)
   {
     id: "floral",
     wheelCategory: "花 (Floral)",
@@ -22,29 +22,86 @@ export const FLAVOR_CATEGORIES: FlavorCategory[] = [
     notes: ["ジャスミン", "カモミール", "ローズ"],
   },
   {
-    id: "dried-fermented",
-    wheelCategory: "酸味・発酵 (Sour/Fermented)",
-    label: "芳醇・ワイニー系",
-    notes: ["レーズン", "プルーン", "赤ワインのような風味"],
+    id: "black-tea",
+    wheelCategory: "花 (Floral)",
+    label: "紅茶系",
+    notes: ["紅茶"],
   },
+  // 果実 (Fruity)
   {
     id: "berry",
     wheelCategory: "果実 (Fruity)",
     label: "ベリー系",
-    notes: ["ブルーベリー", "ラズベリー", "ストロベリー"],
+    notes: ["ブラックベリー", "ラズベリー", "ブルーベリー", "ストロベリー"],
+  },
+  {
+    id: "dried-fruit",
+    wheelCategory: "果実 (Fruity)",
+    label: "ドライフルーツ系",
+    notes: ["レーズン", "プルーン"],
+  },
+  {
+    id: "other-fruit",
+    wheelCategory: "果実 (Fruity)",
+    label: "その他フルーツ系",
+    notes: ["ぶどう", "桃", "パイナップル"],
   },
   {
     id: "citrus",
     wheelCategory: "果実 (Fruity)",
     label: "シトラス系",
-    notes: ["レモン", "オレンジ", "グレープフルーツ"],
+    notes: ["レモン", "ライム", "オレンジ", "グレープフルーツ"],
+  },
+  // 酸味・発酵 (Sour/Fermented)
+  {
+    id: "sour",
+    wheelCategory: "酸味・発酵 (Sour/Fermented)",
+    label: "酸味系",
+    notes: ["クエン酸", "リンゴ酸", "酢酸"],
   },
   {
-    id: "tropical",
-    wheelCategory: "果実 (Fruity)",
-    label: "トロピカル系",
-    notes: ["マンゴー", "パイナップル", "ピーチ"],
+    id: "fermented",
+    wheelCategory: "酸味・発酵 (Sour/Fermented)",
+    label: "芳醇・ワイニー系",
+    notes: [
+      "赤ワインのような芳醇さ",
+      "ウイスキーのような樽香",
+      "熟れすぎた果実の甘い香り",
+    ],
   },
+  // ロースト (Roasted)
+  {
+    id: "tobacco",
+    wheelCategory: "ロースト (Roasted)",
+    label: "たばこ系",
+    notes: ["パイプたばこ", "たばこの葉"],
+  },
+  {
+    id: "burnt",
+    wheelCategory: "ロースト (Roasted)",
+    label: "スモーキー系",
+    notes: ["スモーキー", "灰のような香ばしさ", "こげ臭さ"],
+  },
+  {
+    id: "cereal",
+    wheelCategory: "ロースト (Roasted)",
+    label: "穀物系",
+    notes: ["香ばしい穀物", "麦芽のような甘い香ばしさ"],
+  },
+  // スパイス (Spices)
+  {
+    id: "pungent",
+    wheelCategory: "スパイス (Spices)",
+    label: "ペッパー系",
+    notes: ["こしょうのようなスパイシーさ", "ピリッとした刺激"],
+  },
+  {
+    id: "brown-spice",
+    wheelCategory: "スパイス (Spices)",
+    label: "スパイス系",
+    notes: ["シナモン", "クローブ", "ナツメグ"],
+  },
+  // ナッティ・ココア (Nutty/Cocoa)
   {
     id: "nutty",
     wheelCategory: "ナッティ・ココア (Nutty/Cocoa)",
@@ -52,28 +109,29 @@ export const FLAVOR_CATEGORIES: FlavorCategory[] = [
     notes: ["アーモンド", "ヘーゼルナッツ", "ピーナッツ"],
   },
   {
-    id: "roast",
-    wheelCategory: "ロースト (Roasted)",
-    label: "ロースト系",
-    notes: ["香ばしい穀物", "スモーキー", "カラメリゼ"],
-  },
-  {
     id: "cocoa",
     wheelCategory: "ナッティ・ココア (Nutty/Cocoa)",
     label: "カカオ系",
     notes: ["ダークチョコレート", "カカオニブ"],
   },
+  // 甘味 (Sweet)
+  {
+    id: "brown-sugar",
+    wheelCategory: "甘味 (Sweet)",
+    label: "キャラメル・黒糖系",
+    notes: ["キャラメル", "はちみつ", "メープルシロップ"],
+  },
+  {
+    id: "vanilla",
+    wheelCategory: "甘味 (Sweet)",
+    label: "バニラ系",
+    notes: ["バニラ", "バニリン"],
+  },
   {
     id: "sweet",
     wheelCategory: "甘味 (Sweet)",
-    label: "キャラメル・甘み系",
-    notes: ["キャラメル", "はちみつ", "バニラ"],
-  },
-  {
-    id: "spice",
-    wheelCategory: "スパイス (Spices)",
-    label: "スパイス系",
-    notes: ["シナモン", "クローブ", "ナツメグ"],
+    label: "甘い香り系",
+    notes: ["ふんわり甘い香り", "全体を包む優しい甘さ"],
   },
 ];
 

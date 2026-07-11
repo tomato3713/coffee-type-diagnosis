@@ -23,7 +23,7 @@ const historyEntries: HistoryEntry[] = [
     id: "entry-2",
     diagnosedAt: "2026-07-01T09:00:00.000Z",
     typeId: "bitter-rich-nutty-milk",
-    flavorIds: ["roast", "sweet"],
+    flavorIds: ["burnt", "sweet"],
     baseAnswers: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     flavorAnswers: [1, 1, 1],
   },

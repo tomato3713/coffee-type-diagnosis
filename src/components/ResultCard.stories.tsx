@@ -21,7 +21,7 @@ export const フルーティ系タイプ: Story = {
 export const ナッティ系タイプ: Story = {
   args: {
     type: RESULT_TYPES["bitter-rich-nutty-milk"],
-    flavors: [findFlavorCategory("roast"), findFlavorCategory("sweet")],
+    flavors: [findFlavorCategory("burnt"), findFlavorCategory("sweet")],
     diagnosedAt: "2026-07-11T09:00:00.000Z",
   },
 };

@@ -125,11 +125,22 @@ export const QUESTIONS: Question[] = [
   },
 ];
 
-// flavor 軸の結果で分岐する深掘り質問。各選択肢はフレーバー中分類に1票を投じる
+// flavor 軸の結果で分岐する深掘り質問。各選択肢はフレーバー中分類に1票を投じる。
+// SCA フレーバーホイールの実際の中分類（花2種・果実4種・酸味発酵2種、
+// ナッツココア2種・スパイス2種・ロースト3種・甘味3種＝計18種）を
+// カバーするため、一部の分類は2問で票を得られるようにしている
 export const FLAVOR_QUESTIONS: Record<FlavorBranch, FlavorQuestion[]> = {
   fruity: [
     {
       id: "f1",
+      text: "お茶を飲むなら？",
+      choices: [
+        { label: "ジャスミン茶のような華やかな香り", votes: ["floral"] },
+        { label: "アールグレイのような紅茶の渋み", votes: ["black-tea"] },
+      ],
+    },
+    {
+      id: "f2",
       text: "果物を選ぶなら？",
       choices: [
         { label: "ブルーベリーやいちご", votes: ["berry"] },
@@ -137,25 +148,30 @@ export const FLAVOR_QUESTIONS: Record<FlavorBranch, FlavorQuestion[]> = {
       ],
     },
     {
-      id: "f2",
-      text: "より惹かれる香りは？",
+      id: "f3",
+      text: "食後に果物をつまむなら？",
       choices: [
-        { label: "ジャスミンやカモミールの花の香り", votes: ["floral"] },
         {
-          label: "マンゴーやパッションフルーツの南国の香り",
-          votes: ["tropical"],
+          label: "レーズンやプルーンのようなドライフルーツ",
+          votes: ["dried-fruit"],
         },
+        { label: "ぶどうや桃のような生の果実", votes: ["other-fruit"] },
       ],
     },
     {
-      id: "f3",
-      text: "果実の甘みはどちらが好き？",
+      id: "f4",
+      text: "刺激とコク、より惹かれるのは？",
       choices: [
-        {
-          label: "レーズンや赤ワインのような熟した芳醇さ",
-          votes: ["dried-fermented"],
-        },
-        { label: "摘みたてのようなフレッシュな甘酸っぱさ", votes: ["berry"] },
+        { label: "キリッとしたレモンのような酸味", votes: ["sour"] },
+        { label: "赤ワインのような芳醇な熟成香", votes: ["fermented"] },
+      ],
+    },
+    {
+      id: "f5",
+      text: "より惹かれる香りは？",
+      choices: [
+        { label: "ジャスミンやカモミールの花の香り", votes: ["floral"] },
+        { label: "ベリーのような甘酸っぱい香り", votes: ["berry"] },
       ],
     },
   ],
@@ -170,18 +186,42 @@ export const FLAVOR_QUESTIONS: Record<FlavorBranch, FlavorQuestion[]> = {
     },
     {
       id: "n2",
-      text: "好きな甘い香りは？",
+      text: "スパイスを選ぶなら？",
       choices: [
-        { label: "キャラメルやはちみつのやさしい甘さ", votes: ["sweet"] },
-        { label: "シナモンなどスパイスの効いた香り", votes: ["spice"] },
+        { label: "シナモンのような温かみのある香り", votes: ["brown-spice"] },
+        { label: "こしょうのようなピリッとした刺激", votes: ["pungent"] },
       ],
     },
     {
       id: "n3",
-      text: "焼き菓子を選ぶなら？",
+      text: "焙煎の香りで惹かれるのは？",
       choices: [
-        { label: "しっかり焼き色の香ばしいビスコッティ", votes: ["roast"] },
-        { label: "アーモンドたっぷりのフィナンシェ", votes: ["nutty"] },
+        { label: "たばこの葉のような渋みある香ばしさ", votes: ["tobacco"] },
+        { label: "スモーキーで力強い焦げ感", votes: ["burnt"] },
+      ],
+    },
+    {
+      id: "n4",
+      text: "朝食を選ぶなら？",
+      choices: [
+        { label: "香ばしいシリアルやグラノーラ", votes: ["cereal"] },
+        { label: "黒糖やキャラメルをかけたパンケーキ", votes: ["brown-sugar"] },
+      ],
+    },
+    {
+      id: "n5",
+      text: "デザートの香りで惹かれるのは？",
+      choices: [
+        { label: "バニラアイスのような芳香", votes: ["vanilla"] },
+        { label: "何にでも合う優しい甘さ", votes: ["sweet"] },
+      ],
+    },
+    {
+      id: "n6",
+      text: "好きな甘い香りは？",
+      choices: [
+        { label: "キャラメルやはちみつのやさしい甘さ", votes: ["brown-sugar"] },
+        { label: "バニラのような甘い香り", votes: ["vanilla"] },
       ],
     },
   ],

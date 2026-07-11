@@ -30,6 +30,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
       children: [
         {
           label: "紅茶",
+          categoryIds: ["black-tea"],
           description: "紅茶を思わせる、上品でやや渋みを伴う香り。",
         },
         {
@@ -93,7 +94,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
         },
         {
           label: "ドライフルーツ",
-          categoryIds: ["dried-fermented"],
+          categoryIds: ["dried-fruit"],
           description:
             "乾燥や熟成で凝縮した果実の、濃厚で芳醇な香味のグループです。",
           children: [
@@ -109,7 +110,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
         },
         {
           label: "その他の果実",
-          categoryIds: ["tropical"],
+          categoryIds: ["other-fruit"],
           description:
             "上記に分類されない果実全般の香味をまとめたグループです。",
           children: [
@@ -193,6 +194,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
       children: [
         {
           label: "酸味",
+          categoryIds: ["sour"],
           description:
             "コーヒーに含まれる有機酸由来の、様々な質の酸味をまとめたグループです。",
           children: [
@@ -224,7 +226,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
         },
         {
           label: "アルコール・発酵",
-          categoryIds: ["dried-fermented"],
+          categoryIds: ["fermented"],
           description:
             "発酵やアルコールを思わせる、芳醇で複雑な香味のグループです。",
           children: [
@@ -396,15 +398,17 @@ export const FLAVOR_TREE: FlavorTreeNode = {
       children: [
         {
           label: "パイプたばこ",
+          categoryIds: ["tobacco"],
           description: "パイプたばこのような、甘く香ばしい煙の香り。",
         },
         {
           label: "たばこ",
+          categoryIds: ["tobacco"],
           description: "たばこの葉のような、渋みのある香ばしさ。",
         },
         {
           label: "焦げた",
-          categoryIds: ["roast"],
+          categoryIds: ["burnt"],
           description: "焙煎の焦げに由来する、香ばしく強い香味のグループです。",
           children: [
             {
@@ -428,7 +432,7 @@ export const FLAVOR_TREE: FlavorTreeNode = {
         },
         {
           label: "穀物",
-          categoryIds: ["roast"],
+          categoryIds: ["cereal"],
           description: "麦や穀物を思わせる、香ばしく素朴な香味のグループです。",
           children: [
             {
@@ -449,15 +453,17 @@ export const FLAVOR_TREE: FlavorTreeNode = {
       children: [
         {
           label: "刺激的",
+          categoryIds: ["pungent"],
           description: "スパイス特有の、ピリッとした刺激のある香り。",
         },
         {
           label: "こしょう",
+          categoryIds: ["pungent"],
           description: "こしょうのような、ピリッと鋭い香り。",
         },
         {
           label: "茶色いスパイス",
-          categoryIds: ["spice"],
+          categoryIds: ["brown-spice"],
           description: "シナモンなど温かみのあるスパイスの香味のグループです。",
           children: [
             {
@@ -529,12 +535,12 @@ export const FLAVOR_TREE: FlavorTreeNode = {
       label: "甘味 (Sweet)",
       icon: "🍯",
       color: "#e0762c",
-      categoryIds: ["sweet"],
       description:
         "キャラメルやはちみつのような、コーヒー由来の甘さを表す系統です。",
       children: [
         {
           label: "黒糖",
+          categoryIds: ["brown-sugar"],
           description:
             "黒糖やキャラメルのような、コクのある甘さのグループです。",
           children: [
@@ -560,17 +566,24 @@ export const FLAVOR_TREE: FlavorTreeNode = {
             },
           ],
         },
-        { label: "バニラ", description: "バニラのような、甘く優しい香り。" },
+        {
+          label: "バニラ",
+          categoryIds: ["vanilla"],
+          description: "バニラのような、甘く優しい香り。",
+        },
         {
           label: "バニリン",
+          categoryIds: ["vanilla"],
           description: "バニラの主成分バニリン由来の、甘く芳香的な香り。",
         },
         {
           label: "甘い香り",
+          categoryIds: ["sweet"],
           description: "特定の甘みに限らない、全体的に甘さを感じる香り。",
         },
         {
           label: "全体的な甘さ",
+          categoryIds: ["sweet"],
           description: "コーヒー全体を通して感じる、まろやかな甘さ。",
         },
       ],

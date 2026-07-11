@@ -76,31 +76,44 @@ describe("flavorBranch", () => {
   });
 });
 
+// bits の下位 length ビットを 0/1 の回答配列に変換する
+function bitsToAnswers(bits: number, length: number): number[] {
+  return Array.from({ length }, (_, i) => (bits >> i) & 1);
+}
+
 describe("diagnoseFlavor", () => {
   it("2票の分類が1票の分類より先に返る", () => {
-    // fruity: f1=berry, f2=tropical, f3=berry → berry 2票, tropical 1票
-    expect(diagnoseFlavor("fruity", [0, 1, 1]).map((c) => c.id)).toEqual([
+    // fruity: f1=floral, f5=floral で floral が2票、f2/f3/f4 は各1票
+    expect(diagnoseFlavor("fruity", [0, 0, 0, 0, 0]).map((c) => c.id)).toEqual([
+      "floral",
       "berry",
-      "tropical",
+      "dried-fruit",
+      "sour",
     ]);
   });
 
   it("全分類が同数のときは定義順ですべて返る", () => {
-    // fruity: f1=berry, f2=floral, f3=dried-fermented → 各1票、3分類とも該当
-    expect(diagnoseFlavor("fruity", [0, 0, 0]).map((c) => c.id)).toEqual([
+    // fruity: f1=black-tea, f2=citrus, f3=dried-fruit, f4=sour, f5=floral
+    // → 重複なく5分類がすべて1票ずつ
+    expect(diagnoseFlavor("fruity", [1, 1, 0, 0, 0]).map((c) => c.id)).toEqual([
       "floral",
-      "dried-fermented",
-      "berry",
+      "black-tea",
+      "dried-fruit",
+      "citrus",
+      "sour",
     ]);
   });
 
-  it("好ましいと判定された分類は2件または3件すべて返る（取りこぼさない）", () => {
+  it("返る件数は質問数を超えない（取りこぼさない）", () => {
     for (const branch of ["fruity", "nutty"] as const) {
-      for (let bits = 0; bits < 8; bits++) {
-        const answers = [bits & 1, (bits >> 1) & 1, (bits >> 2) & 1];
-        const result = diagnoseFlavor(branch, answers);
-        expect(result.length).toBeGreaterThanOrEqual(2);
-        expect(result.length).toBeLessThanOrEqual(3);
+      const questionCount = FLAVOR_QUESTIONS[branch].length;
+      for (let bits = 0; bits < 2 ** questionCount; bits++) {
+        const result = diagnoseFlavor(
+          branch,
+          bitsToAnswers(bits, questionCount),
+        );
+        expect(result.length).toBeGreaterThanOrEqual(1);
+        expect(result.length).toBeLessThanOrEqual(questionCount);
       }
     }
   });
@@ -112,10 +125,15 @@ describe("diagnoseFlavor", () => {
           q.choices.flatMap((c) => c.votes),
         ),
       );
+      const questionCount = FLAVOR_QUESTIONS[branch].length;
       const reached = new Set<string>();
-      for (let bits = 0; bits < 8; bits++) {
-        const answers = [bits & 1, (bits >> 1) & 1, (bits >> 2) & 1];
-        for (const c of diagnoseFlavor(branch, answers)) reached.add(c.id);
+      for (let bits = 0; bits < 2 ** questionCount; bits++) {
+        for (const c of diagnoseFlavor(
+          branch,
+          bitsToAnswers(bits, questionCount),
+        )) {
+          reached.add(c.id);
+        }
       }
       expect(reached).toEqual(votable);
     }
@@ -169,9 +187,15 @@ describe("診断データの整合性", () => {
 
   it("深掘り質問の投票先はすべて定義済みのフレーバー分類になっている", () => {
     const ids = new Set(FLAVOR_CATEGORIES.map((c) => c.id));
+    const expectedQuestionCounts: Record<FlavorBranch, number> = {
+      fruity: 5,
+      nutty: 6,
+    };
     const branches: FlavorBranch[] = ["fruity", "nutty"];
     for (const branch of branches) {
-      expect(FLAVOR_QUESTIONS[branch].length).toBe(3);
+      expect(FLAVOR_QUESTIONS[branch].length).toBe(
+        expectedQuestionCounts[branch],
+      );
       for (const q of FLAVOR_QUESTIONS[branch]) {
         for (const c of q.choices) {
           expect(c.votes.length).toBeGreaterThan(0);
@@ -200,7 +224,7 @@ describe("ランダム診断によるルート到達性（1000回試行）", () 
     }
   });
 
-  it("全10種のフレーバー分類が結果として出現する", () => {
+  it("全18種のフレーバー分類が結果として出現する", () => {
     const counts = new Map<string, number>(
       FLAVOR_CATEGORIES.map((c) => [c.id, 0]),
     );
