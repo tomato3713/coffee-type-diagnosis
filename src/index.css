@@ -19,6 +19,8 @@
 body {
   margin: 0;
   background: var(--color-bg);
+  /* フレーバーツリーの 100vw 表示がスクロールバー幅ぶんはみ出すのを防ぐ */
+  overflow-x: hidden;
 }
 
 .app {
@@ -345,4 +347,132 @@ button {
 /* 共有シートのみのとき（タッチデバイス）は1つのボタンを全幅にする */
 .share-buttons > :only-child {
   grid-column: 1 / -1;
+}
+
+/* フレーバーツリー */
+.flavor-tree-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flavor-tree-lead {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+/* 中央寄せコンテナから抜け出して画面幅いっぱいに表示する */
+.flavor-tree-canvas {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: 70vh;
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-surface);
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+
+.flavor-tree-canvas:active {
+  cursor: grabbing;
+}
+
+.flavor-tree-canvas svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.flavor-tree-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.flavor-tree-controls button {
+  padding: 8px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+/* SVG のノードはブラウザ既定の青いフォーカス枠を出さず、選択リングで代える */
+.flavor-tree-node {
+  outline: none;
+}
+
+.flavor-modal {
+  position: relative;
+  width: calc(100% - 48px);
+  max-width: 360px;
+  padding: 24px;
+  border: none;
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.flavor-modal::backdrop {
+  background: rgb(59 42 32 / 45%);
+}
+
+.flavor-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+/* ブラウザ既定の青いフォーカス枠の代わりに、アプリの配色に合わせた枠にする */
+.flavor-modal-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.flavor-modal-heading {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.flavor-modal-description {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* PC のホバー詳細説明ツールチップ */
+.flavor-tooltip {
+  position: fixed;
+  z-index: 10;
+  max-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 16px rgb(59 42 32 / 20%);
+  pointer-events: none;
+}
+
+.flavor-tooltip-heading {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.flavor-tooltip-description {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-muted);
 }

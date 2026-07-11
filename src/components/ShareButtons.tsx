@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import { isTouchDevice } from "../logic/device";
 import {
   buildShareText,
   buildShareUrl,
@@ -27,10 +28,8 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
 
   // スマホ等のタッチデバイスは OS の共有シートに一本化し、
   // PC では X / LINE / mixi の intent リンクを並べる
-  const isTouchDevice = matchMedia(
-    "(hover: none) and (pointer: coarse)",
-  ).matches;
-  const useShareSheet = isTouchDevice && typeof navigator.share === "function";
+  const useShareSheet =
+    isTouchDevice() && typeof navigator.share === "function";
 
   async function shareViaSheet() {
     try {

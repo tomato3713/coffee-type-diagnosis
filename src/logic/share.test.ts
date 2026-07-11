@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { RESULT_TYPES } from "../data/results";
 import {
+  buildResultHash,
   buildShareText,
   buildShareUrl,
+  buildWheelHash,
   decodeShareQuery,
   encodeShareQuery,
   lineShareUrl,
   mixiShareUrl,
+  parseHashRoute,
+  RESULT_PATH,
   type SharedResult,
+  WHEEL_PATH,
   xIntentUrl,
 } from "./share";
 
@@ -65,11 +70,51 @@ describe("encodeShareQuery / decodeShareQuery", () => {
   });
 });
 
+describe("parseHashRoute", () => {
+  it("空文字列は空の path と query になる", () => {
+    expect(parseHashRoute("")).toEqual({ path: "", query: "" });
+  });
+
+  it("クエリなしのハッシュパスを分解できる", () => {
+    expect(parseHashRoute("#/wheel")).toEqual({ path: "/wheel", query: "" });
+  });
+
+  it("先頭の # がなくても分解できる", () => {
+    expect(parseHashRoute("/wheel")).toEqual({ path: "/wheel", query: "" });
+  });
+
+  it("クエリ付きのハッシュパスを path と query に分解する", () => {
+    expect(parseHashRoute("#/result?t=a&f=b,c")).toEqual({
+      path: "/result",
+      query: "t=a&f=b,c",
+    });
+  });
+});
+
+describe("buildResultHash / buildWheelHash", () => {
+  it("buildResultHash は /result パスにエンコード済みクエリを付ける", () => {
+    const { path, query } = parseHashRoute(buildResultHash(sample));
+    expect(path).toBe(RESULT_PATH);
+    expect(decodeShareQuery(query)).toEqual(sample);
+  });
+
+  it("buildWheelHash は結果を渡すと /wheel パスにクエリを付ける", () => {
+    const { path, query } = parseHashRoute(buildWheelHash(sample));
+    expect(path).toBe(WHEEL_PATH);
+    expect(decodeShareQuery(query)).toEqual(sample);
+  });
+
+  it("buildWheelHash は null を渡すとクエリなしの /wheel になる", () => {
+    expect(buildWheelHash(null)).toBe(`#${WHEEL_PATH}`);
+  });
+});
+
 describe("シェア URL とシェア文言", () => {
-  it("buildShareUrl はベース URL にクエリを連結する", () => {
+  it("buildShareUrl はベース URL にハッシュパス形式のクエリを連結する", () => {
     const url = new URL(buildShareUrl("https://example.com/app/", sample));
-    expect(url.searchParams.get("t")).toBe(sample.typeId);
-    expect(url.searchParams.get("f")).toBe("floral,berry");
+    const { path, query } = parseHashRoute(url.hash);
+    expect(path).toBe(RESULT_PATH);
+    expect(decodeShareQuery(query)).toEqual(sample);
   });
 
   it("buildShareText はタイプ名とハッシュタグを含む", () => {

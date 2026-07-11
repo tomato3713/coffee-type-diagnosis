@@ -6,6 +6,31 @@ export interface SharedResult {
   flavorIds: FlavorCategoryId[];
 }
 
+// アプリ内の画面は "" (トップ) / #/result?t=&f= / #/wheel?t=&f= の
+// ハッシュパスで表す。GitHub Pages 等の静的ホスティングでも
+// 直接アクセスが 404 にならない
+export const RESULT_PATH = "/result";
+export const WHEEL_PATH = "/wheel";
+
+// location.hash（先頭 # あり/なし両対応）を { path, query } に分解する
+export function parseHashRoute(hash: string): { path: string; query: string } {
+  const raw = hash.replace(/^#/, "");
+  const qIndex = raw.indexOf("?");
+  return qIndex === -1
+    ? { path: raw, query: "" }
+    : { path: raw.slice(0, qIndex), query: raw.slice(qIndex + 1) };
+}
+
+export function buildResultHash(result: SharedResult): string {
+  return `#${RESULT_PATH}?${encodeShareQuery(result)}`;
+}
+
+export function buildWheelHash(result: SharedResult | null): string {
+  return result
+    ? `#${WHEEL_PATH}?${encodeShareQuery(result)}`
+    : `#${WHEEL_PATH}`;
+}
+
 // 例: "t=acid-light-fruity-straight&f=floral,berry"（先頭 ? なし）
 export function encodeShareQuery(result: SharedResult): string {
   const params = new URLSearchParams({
@@ -40,7 +65,7 @@ export function buildShareText(typeName: string): string {
 }
 
 export function buildShareUrl(baseUrl: string, result: SharedResult): string {
-  return `${baseUrl}?${encodeShareQuery(result)}`;
+  return `${baseUrl}${buildResultHash(result)}`;
 }
 
 export function xIntentUrl(text: string, url: string): string {
