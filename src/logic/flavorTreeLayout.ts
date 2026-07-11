@@ -5,6 +5,7 @@ export interface LaidOutNode {
   label: string;
   icon?: string;
   color: string;
+  description?: string;
   x: number;
   y: number;
   // 中心からの角度（ラジアン、x軸正方向が0）と距離。ラベルの回転に使う
@@ -65,6 +66,7 @@ export function layoutFlavorTree(
       label: node.label,
       icon: node.icon,
       color: ownColor,
+      description: node.description,
       x: 0,
       y: 0,
       angle: 0,

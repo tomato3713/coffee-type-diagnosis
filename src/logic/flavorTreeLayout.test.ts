@@ -12,6 +12,11 @@ function collectCategoryIds(
   for (const child of node.children ?? []) collectCategoryIds(child, into);
 }
 
+function collectNodes(node: FlavorTreeNode, into: FlavorTreeNode[]): void {
+  into.push(node);
+  for (const child of node.children ?? []) collectNodes(child, into);
+}
+
 describe("フレーバーツリーのデータ整合性", () => {
   it("診断結果の全フレーバー分類がツリー上のノードに対応している", () => {
     const tagged = new Set<FlavorCategoryId>();
@@ -26,6 +31,14 @@ describe("フレーバーツリーのデータ整合性", () => {
     for (const category of FLAVOR_TREE.children ?? []) {
       expect(category.color).toBeDefined();
       expect(category.icon).toBeDefined();
+    }
+  });
+
+  it("全ノードが長押し詳細表示用の説明文を持つ", () => {
+    const all: FlavorTreeNode[] = [];
+    collectNodes(FLAVOR_TREE, all);
+    for (const node of all) {
+      expect(node.description?.length ?? 0).toBeGreaterThan(0);
     }
   });
 });
@@ -80,6 +93,13 @@ describe("layoutFlavorTree", () => {
     expect(byLabel.get("ナッツ・ココア (Nutty/Cocoa)")?.highlighted).toBe(
       false,
     );
+  });
+
+  it("説明文はレイアウト後のノードにも引き継がれる", () => {
+    const { nodes } = layoutFlavorTree(FLAVOR_TREE);
+    const root = nodes[0];
+    expect(root.description).toBe(FLAVOR_TREE.description);
+    expect(nodes.every((n) => (n.description?.length ?? 0) > 0)).toBe(true);
   });
 
   it("色は最も近い祖先カテゴリから継承される", () => {

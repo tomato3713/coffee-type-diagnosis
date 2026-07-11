@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FLAVOR_TREE } from "../data/flavorTree";
 import { type LaidOutNode, layoutFlavorTree } from "../logic/flavorTreeLayout";
 import type { FlavorCategoryId } from "../types";
+import { FlavorNodeDetailModal } from "./FlavorNodeDetailModal";
 
 interface Props {
   highlightIds?: FlavorCategoryId[];
@@ -22,6 +23,8 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 4;
 const DEFAULT_VIEW: ViewTransform = { x: 0, y: 0, k: 0.55 };
 const EDGE_PAD = 10;
+const LONG_PRESS_MS = 500;
+const LONG_PRESS_MOVE_TOLERANCE = 8;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -59,6 +62,7 @@ function edgeExitPoint(
 
 // SCA フレーバーホイールの木を SVG で描画する。
 // ドラッグでパン、ホイール / ピンチ / ボタンでズームできる。
+// ノードをクリックするとそこへ拡大表示し、長押しで詳細説明を開く。
 // 画面外に伸びるエッジには行き先ノードのラベルを出し、押すとそこへ移動する
 export function FlavorTreeView({ highlightIds = [] }: Props) {
   const layout = useMemo(
@@ -68,8 +72,19 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   const [view, setView] = useState<ViewTransform>(DEFAULT_VIEW);
+  // クリックで選択中のノード（中心に拡大表示し、強調リングを出す）
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // 長押しで詳細説明モーダルを開くノード
+  const [describedNode, setDescribedNode] = useState<LaidOutNode | null>(null);
   // ポインタ操作の作業領域（再レンダリング不要な値）
   const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const longPress = useRef<{
+    timer: ReturnType<typeof setTimeout> | null;
+    pointerId: number | null;
+    x: number;
+    y: number;
+    triggered: boolean;
+  }>({ timer: null, pointerId: null, x: 0, y: 0, triggered: false });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -125,6 +140,22 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     [updateView, size],
   );
 
+  // ノードをクリックしたときに、そのノードを中心に据えつつ拡大する
+  const ZOOM_IN_FACTOR = 1.8;
+  const focusOnNode = useCallback(
+    (node: LaidOutNode) => {
+      updateView((v) => {
+        const k = clampScale(v.k * ZOOM_IN_FACTOR);
+        return {
+          k,
+          x: size.width / 2 - node.x * k,
+          y: size.height / 2 - node.y * k,
+        };
+      });
+    },
+    [updateView, size],
+  );
+
   // 強調表示があるときは、強調された枝と、その隣り合うフレーバーが
   // 一緒に見える位置・倍率で開始する。強調なしなら全体が収まるようにする
   const focusInitial = useCallback(() => {
@@ -156,6 +187,8 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
 
   useEffect(() => {
     focusInitial();
+    setSelectedIndex(null);
+    setDescribedNode(null);
   }, [focusInitial]);
 
   // React の onWheel は passive なため、preventDefault できるよう直接登録する
@@ -175,6 +208,30 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
+  // 長押し判定: pointerdown から一定時間、大きく動かず離されなければ発火する
+  const clearLongPressTimer = useCallback(() => {
+    if (longPress.current.timer) clearTimeout(longPress.current.timer);
+    longPress.current.timer = null;
+  }, []);
+
+  const startLongPress = useCallback(
+    (node: LaidOutNode, e: React.PointerEvent) => {
+      clearLongPressTimer();
+      const timer = setTimeout(() => {
+        longPress.current.triggered = true;
+        setDescribedNode(node);
+      }, LONG_PRESS_MS);
+      longPress.current = {
+        timer,
+        pointerId: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        triggered: false,
+      };
+    },
+    [clearLongPressTimer],
+  );
+
   function onPointerDown(e: React.PointerEvent) {
     e.currentTarget.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -184,6 +241,16 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     const prev = pointers.current.get(e.pointerId);
     if (!prev) return;
     const current = { x: e.clientX, y: e.clientY };
+
+    if (
+      longPress.current.pointerId === e.pointerId &&
+      Math.hypot(
+        current.x - longPress.current.x,
+        current.y - longPress.current.y,
+      ) > LONG_PRESS_MOVE_TOLERANCE
+    ) {
+      clearLongPressTimer();
+    }
 
     if (pointers.current.size === 1) {
       updateView((v) => ({
@@ -215,6 +282,17 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
 
   function onPointerEnd(e: React.PointerEvent) {
     pointers.current.delete(e.pointerId);
+    clearLongPressTimer();
+  }
+
+  function selectNode(index: number, node: LaidOutNode) {
+    if (longPress.current.triggered) {
+      // 直前の長押しでモーダルを開いた分のクリックは無視する
+      longPress.current.triggered = false;
+      return;
+    }
+    setSelectedIndex(index);
+    focusOnNode(node);
   }
 
   const dimmed = (highlighted: boolean) => layout.hasHighlight && !highlighted;
@@ -302,16 +380,38 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                 />
               );
             })}
-            {layout.nodes.map((node) => {
+            {layout.nodes.map((node, index) => {
               // ラベルは中心から外向きに回転させ、左半分では反転して読めるようにする
               const deg = (node.angle * 180) / Math.PI;
               const flipped = deg > 90 && deg < 270;
+              const isSelected = index === selectedIndex;
               return (
+                // biome-ignore lint/a11y/useSemanticElements: SVG 内のためボタン要素は使えない
                 <g
                   key={`node-${node.parentIndex}-${node.label}`}
+                  className="flavor-tree-node"
                   transform={`translate(${node.x},${node.y})`}
                   opacity={dimmed(node.highlighted) ? 0.25 : 1}
+                  cursor="pointer"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${node.label} を中心に拡大表示（長押しで説明を表示）`}
+                  onPointerDown={(e) => startLongPress(node, e)}
+                  onClick={() => selectNode(index, node)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && selectNode(index, node)
+                  }
                 >
+                  {/* タップしやすいよう見た目より広い透明な当たり判定 */}
+                  <circle r={14} fill="transparent" />
+                  {isSelected && (
+                    <circle
+                      r={(node.isLeaf ? 3.5 : 5.5) + 6}
+                      fill="none"
+                      stroke="var(--color-accent)"
+                      strokeWidth={2.5}
+                    />
+                  )}
                   <circle r={node.isLeaf ? 3.5 : 5.5} fill={node.color} />
                   {node.depth === 0 ? (
                     <text
@@ -331,7 +431,9 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                       textAnchor={flipped ? "end" : "start"}
                       fontSize={node.depth === 1 ? 14 : 12}
                       fontWeight={
-                        node.depth === 1 || node.highlighted ? 700 : 400
+                        node.depth === 1 || node.highlighted || isSelected
+                          ? 700
+                          : 400
                       }
                       fill="var(--color-ink)"
                     >
@@ -358,6 +460,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
               // biome-ignore lint/a11y/useSemanticElements: SVG 内のためボタン要素は使えない
               <g
                 key={`chip-${node.parentIndex}-${node.label}`}
+                className="flavor-tree-node"
                 transform={`translate(${at.x},${at.y})`}
                 opacity={dimmed(node.highlighted) ? 0.4 : 0.95}
                 cursor="pointer"
@@ -408,6 +511,10 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
           リセット
         </button>
       </div>
+      <FlavorNodeDetailModal
+        node={describedNode}
+        onClose={() => setDescribedNode(null)}
+      />
     </div>
   );
 }
