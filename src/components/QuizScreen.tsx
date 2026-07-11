@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
 import { flavorBranch } from "../logic/diagnose";
+import { quizProgress } from "../logic/quizProgress";
 
 interface Props {
   onComplete: (baseAnswers: number[], flavorAnswers: number[]) => void;
@@ -17,6 +18,7 @@ export function QuizScreen({ onComplete }: Props) {
   const question = flavorQuestions
     ? flavorQuestions[flavorAnswers.length]
     : QUESTIONS[baseAnswers.length];
+  const progress = quizProgress(baseAnswers, flavorAnswers);
 
   function select(index: number) {
     if (flavorQuestions) {
@@ -33,8 +35,8 @@ export function QuizScreen({ onComplete }: Props) {
       {/* 深掘り質問数は分岐で変わるため、件数表示は出さずバーのみで進捗を示す */}
       <progress
         className="quiz-progress"
-        value={flavorQuestions ? flavorAnswers.length : baseAnswers.length}
-        max={flavorQuestions ? flavorQuestions.length : QUESTIONS.length}
+        value={progress.value}
+        max={progress.max}
       />
       <h1 className="quiz-question">{question.text}</h1>
       <div className="quiz-choices">
