@@ -25,6 +25,17 @@ const DEFAULT_VIEW: ViewTransform = { x: 0, y: 0, k: 0.55 };
 const EDGE_PAD = 10;
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOLERANCE = 8;
+// この距離を超えて動いて初めてドラッグ（パン）とみなし、それまでは
+// pointer capture を張らずクリックがノードにそのまま届くようにする
+const DRAG_THRESHOLD = 4;
+
+interface PointerState {
+  x: number;
+  y: number;
+  downX: number;
+  downY: number;
+  captured: boolean;
+}
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -77,7 +88,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
   // 長押しで詳細説明モーダルを開くノード
   const [describedNode, setDescribedNode] = useState<LaidOutNode | null>(null);
   // ポインタ操作の作業領域（再レンダリング不要な値）
-  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pointers = useRef(new Map<number, PointerState>());
   const longPress = useRef<{
     timer: ReturnType<typeof setTimeout> | null;
     pointerId: number | null;
@@ -233,8 +244,23 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
   );
 
   function onPointerDown(e: React.PointerEvent) {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // ここでは pointer capture を張らない。単純なクリックまで巻き込むと、
+    // pointerup / click の対象がこのコンテナに奪われてノードに届かなくなる
+    pointers.current.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY,
+      downX: e.clientX,
+      downY: e.clientY,
+      captured: false,
+    });
+  }
+
+  // ブラウザによっては無効な pointerId で例外を投げることがあるため、
+  // capture できなくてもドラッグ判定自体は続行する
+  function tryCapture(e: React.PointerEvent) {
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
   }
 
   function onPointerMove(e: React.PointerEvent) {
@@ -252,14 +278,13 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
       clearLongPressTimer();
     }
 
-    if (pointers.current.size === 1) {
-      updateView((v) => ({
-        ...v,
-        x: v.x + current.x - prev.x,
-        y: v.y + current.y - prev.y,
-      }));
-    } else if (pointers.current.size === 2) {
-      // ピンチ: 2本指の距離の変化率でズームし、中点を不動点にする
+    if (pointers.current.size >= 2) {
+      // ピンチ: 2本指なので通常のクリックとは衝突しない
+      if (!prev.captured) {
+        tryCapture(e);
+        prev.captured = true;
+      }
+      // 2本指の距離の変化率でズームし、中点を不動点にする
       const [a, b] = [...pointers.current.entries()].map(([id, p]) =>
         id === e.pointerId ? { id, p: current, prev: p } : { id, p, prev: p },
       );
@@ -276,8 +301,23 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
           factor,
         );
       }
+    } else if (
+      prev.captured ||
+      Math.hypot(current.x - prev.downX, current.y - prev.downY) >
+        DRAG_THRESHOLD
+    ) {
+      // 閾値を超えて初めてドラッグ（パン）とみなし、この時点で capture する
+      if (!prev.captured) {
+        tryCapture(e);
+        prev.captured = true;
+      }
+      updateView((v) => ({
+        ...v,
+        x: v.x + current.x - prev.x,
+        y: v.y + current.y - prev.y,
+      }));
     }
-    pointers.current.set(e.pointerId, current);
+    pointers.current.set(e.pointerId, { ...prev, x: current.x, y: current.y });
   }
 
   function onPointerEnd(e: React.PointerEvent) {
