@@ -16,13 +16,13 @@
 
 ## クイックスタート
 
-前提: Node.js 24 以上 / npm 11 以上
+前提: Node.js 24 以上 / pnpm 10 以上
 
 ```sh
 git clone https://github.com/tomato3713/coffee-type-diagnosis.git
 cd coffee-type-diagnosis
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 `http://localhost:5173/coffee-type-diagnosis/` が開発サーバーとして起動します。
@@ -31,12 +31,14 @@ npm run dev
 
 | コマンド | 説明 |
 | --- | --- |
-| `npm run dev` | 開発サーバーを起動 |
-| `npm run build` | 型チェック（`tsc -b`）と本番ビルド |
-| `npm run preview` | ビルド結果を本番相当のパスで確認 |
-| `npm test` | Vitest をウォッチモードで実行（CI では `npx vitest run`） |
-| `npm run lint` | Biome による lint + format チェック |
-| `npm run format` | Biome によるフォーマット適用 |
+| `pnpm dev` | 開発サーバーを起動 |
+| `pnpm build` | 型チェック（`tsc -b`）と本番ビルド |
+| `pnpm preview` | ビルド結果を本番相当のパスで確認 |
+| `pnpm test` | Vitest をウォッチモードで実行（CI では `pnpm exec vitest run`） |
+| `pnpm lint` | Biome による lint + format チェック |
+| `pnpm format` | Biome によるフォーマット適用 |
+| `pnpm storybook` | Storybook を起動（http://localhost:6006） |
+| `pnpm build-storybook` | Storybook の静的ビルド |
 
 ## 診断の仕組み
 

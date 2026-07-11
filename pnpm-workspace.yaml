@@ -1,0 +1,4 @@
+# 古い正規パッケージが trust check（provenance の有無比較）で
+# 誤検知されるため、確認済みのものだけ除外する
+trustPolicyExclude:
+  - semver@6.3.1
