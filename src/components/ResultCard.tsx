@@ -4,7 +4,8 @@ import type { FlavorCategory, ResultType } from "../types";
 interface Props {
   type: ResultType;
   flavors: FlavorCategory[];
-  diagnosedAt: string;
+  // シェア閲覧では日付を持たないため省略可
+  diagnosedAt?: string;
   ref?: Ref<HTMLDivElement>;
 }
 
@@ -48,9 +49,11 @@ export function ResultCard({ type, flavors, diagnosedAt, ref }: Props) {
       <footer className="result-card-footer">
         <div className="result-card-footer-row">
           <span>コーヒータイプ診断</span>
-          <time dateTime={diagnosedAt}>
-            {new Date(diagnosedAt).toLocaleDateString("ja-JP")}
-          </time>
+          {diagnosedAt && (
+            <time dateTime={diagnosedAt}>
+              {new Date(diagnosedAt).toLocaleDateString("ja-JP")}
+            </time>
+          )}
         </div>
         <p className="result-card-url">{`${location.origin}${import.meta.env.BASE_URL}`}</p>
       </footer>
