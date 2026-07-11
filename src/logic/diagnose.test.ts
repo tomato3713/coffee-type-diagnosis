@@ -85,21 +85,22 @@ describe("diagnoseFlavor", () => {
     ]);
   });
 
-  it("全分類が同数のときは定義順で上位2件が返る", () => {
-    // fruity: f1=berry, f2=floral, f3=dried-fermented → 各1票
+  it("全分類が同数のときは定義順ですべて返る", () => {
+    // fruity: f1=berry, f2=floral, f3=dried-fermented → 各1票、3分類とも該当
     expect(diagnoseFlavor("fruity", [0, 0, 0]).map((c) => c.id)).toEqual([
       "floral",
       "dried-fermented",
+      "berry",
     ]);
   });
 
-  it("返る分類は最大2件になる", () => {
+  it("好ましいと判定された分類は2件または3件すべて返る（取りこぼさない）", () => {
     for (const branch of ["fruity", "nutty"] as const) {
       for (let bits = 0; bits < 8; bits++) {
         const answers = [bits & 1, (bits >> 1) & 1, (bits >> 2) & 1];
         const result = diagnoseFlavor(branch, answers);
-        expect(result.length).toBeGreaterThanOrEqual(1);
-        expect(result.length).toBeLessThanOrEqual(2);
+        expect(result.length).toBeGreaterThanOrEqual(2);
+        expect(result.length).toBeLessThanOrEqual(3);
       }
     }
   });
@@ -177,6 +178,42 @@ describe("診断データの整合性", () => {
           for (const id of c.votes) expect(ids).toContain(id);
         }
       }
+    }
+  });
+});
+
+describe("ランダム診断によるルート到達性（1000回試行）", () => {
+  function randomAnswers(length: number): number[] {
+    return Array.from({ length }, () => Math.round(Math.random()));
+  }
+
+  it("全16タイプが結果として出現する", () => {
+    const counts = new Map<string, number>(
+      Object.keys(RESULT_TYPES).map((id) => [id, 0]),
+    );
+    for (let i = 0; i < 1000; i++) {
+      const id = diagnose(randomAnswers(QUESTIONS.length)).id;
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    for (const [id, count] of counts) {
+      expect(count, `${id} が一度も出現しなかった`).toBeGreaterThan(0);
+    }
+  });
+
+  it("全10種のフレーバー分類が結果として出現する", () => {
+    const counts = new Map<string, number>(
+      FLAVOR_CATEGORIES.map((c) => [c.id, 0]),
+    );
+    for (let i = 0; i < 1000; i++) {
+      const baseAnswers = randomAnswers(QUESTIONS.length);
+      const branch = flavorBranch(baseAnswers);
+      const flavorAnswers = randomAnswers(FLAVOR_QUESTIONS[branch].length);
+      for (const category of diagnoseFlavor(branch, flavorAnswers)) {
+        counts.set(category.id, (counts.get(category.id) ?? 0) + 1);
+      }
+    }
+    for (const [id, count] of counts) {
+      expect(count, `${id} が一度も出現しなかった`).toBeGreaterThan(0);
     }
   });
 });

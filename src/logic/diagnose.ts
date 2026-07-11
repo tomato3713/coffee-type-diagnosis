@@ -53,7 +53,8 @@ export function flavorBranch(answers: number[]): FlavorBranch {
 }
 
 // flavorAnswers は FLAVOR_QUESTIONS[branch] と同順の選択肢 index。
-// 得票を集計し、上位2分類を返す（同数は FLAVOR_CATEGORIES の定義順を優先）
+// 得票のあった分類を、得票数の多い順にすべて返す
+// （同数は FLAVOR_CATEGORIES の定義順を優先）
 export function diagnoseFlavor(
   branch: FlavorBranch,
   flavorAnswers: number[],
@@ -65,7 +66,7 @@ export function diagnoseFlavor(
       throw new Error(`invalid answer for ${question.id}: ${flavorAnswers[i]}`);
     for (const id of choice.votes) votes.set(id, (votes.get(id) ?? 0) + 1);
   });
-  return FLAVOR_CATEGORIES.filter((c) => votes.has(c.id))
-    .sort((a, b) => (votes.get(b.id) ?? 0) - (votes.get(a.id) ?? 0))
-    .slice(0, 2);
+  return FLAVOR_CATEGORIES.filter((c) => votes.has(c.id)).sort(
+    (a, b) => (votes.get(b.id) ?? 0) - (votes.get(a.id) ?? 0),
+  );
 }

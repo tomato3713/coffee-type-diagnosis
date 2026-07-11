@@ -1,6 +1,10 @@
 import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
 import type { FlavorCategoryId } from "../types";
 
+// フレーバー深掘り質問は分岐ごとに3問（各1票）なので、結果に出る
+// フレーバー分類は最大3件になる
+const MAX_FLAVOR_IDS = 3;
+
 export interface SharedResult {
   typeId: string;
   flavorIds: FlavorCategoryId[];
@@ -51,7 +55,7 @@ export function decodeShareQuery(search: string): SharedResult | null {
   const known = new Set(FLAVOR_CATEGORIES.map((c) => c.id));
   if (
     flavorIds.length === 0 ||
-    flavorIds.length > 2 ||
+    flavorIds.length > MAX_FLAVOR_IDS ||
     new Set(flavorIds).size !== flavorIds.length ||
     !flavorIds.every((id) => known.has(id as FlavorCategoryId))
   ) {
