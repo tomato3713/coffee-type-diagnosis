@@ -60,9 +60,20 @@ describe("encodeShareQuery / decodeShareQuery", () => {
     expect(decodeShareQuery("")).toBeNull();
   });
 
-  it("flavorId が3個以上または重複していると null になる", () => {
+  it("flavorId が3個までなら受理される", () => {
     expect(
       decodeShareQuery("t=acid-light-fruity-straight&f=floral,berry,citrus"),
+    ).toEqual({
+      typeId: "acid-light-fruity-straight",
+      flavorIds: ["floral", "berry", "citrus"],
+    });
+  });
+
+  it("flavorId が4個以上または重複していると null になる", () => {
+    expect(
+      decodeShareQuery(
+        "t=acid-light-fruity-straight&f=floral,berry,citrus,tropical",
+      ),
     ).toBeNull();
     expect(
       decodeShareQuery("t=acid-light-fruity-straight&f=floral,floral"),
