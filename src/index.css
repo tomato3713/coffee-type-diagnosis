@@ -19,6 +19,8 @@
 body {
   margin: 0;
   background: var(--color-bg);
+  /* フレーバーツリーの 100vw 表示がスクロールバー幅ぶんはみ出すのを防ぐ */
+  overflow-x: hidden;
 }
 
 .app {
@@ -360,10 +362,13 @@ button {
   font-size: 0.9rem;
 }
 
+/* 中央寄せコンテナから抜け出して画面幅いっぱいに表示する */
 .flavor-tree-canvas {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
   height: 70vh;
-  border: 1px solid var(--color-line);
-  border-radius: 12px;
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
   background: var(--color-surface);
   overflow: hidden;
   touch-action: none;

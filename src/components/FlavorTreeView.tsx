@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FLAVOR_TREE } from "../data/flavorTree";
-import { layoutFlavorTree } from "../logic/flavorTreeLayout";
+import { type LaidOutNode, layoutFlavorTree } from "../logic/flavorTreeLayout";
 import type { FlavorCategoryId } from "../types";
 
 interface Props {
@@ -13,58 +13,150 @@ interface ViewTransform {
   k: number;
 }
 
+interface Size {
+  width: number;
+  height: number;
+}
+
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 4;
+const DEFAULT_VIEW: ViewTransform = { x: 0, y: 0, k: 0.55 };
+const EDGE_PAD = 10;
 
-function clampScale(k: number): number {
-  return Math.min(MAX_SCALE, Math.max(MIN_SCALE, k));
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const clampScale = (k: number) => clamp(k, MIN_SCALE, MAX_SCALE);
+
+// 画面内の from から画面外の to へ伸びる線分が、画面境界（pad の内側）と
+// 交わる点を返す
+function edgeExitPoint(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  size: Size,
+  pad: number,
+): { x: number; y: number } {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  let t = 1;
+  for (const bx of [pad, size.width - pad]) {
+    if (dx !== 0) {
+      const tt = (bx - from.x) / dx;
+      if (tt > 0 && tt < t) t = tt;
+    }
+  }
+  for (const by of [pad, size.height - pad]) {
+    if (dy !== 0) {
+      const tt = (by - from.y) / dy;
+      if (tt > 0 && tt < t) t = tt;
+    }
+  }
+  return {
+    x: clamp(from.x + dx * t, pad, size.width - pad),
+    y: clamp(from.y + dy * t, pad, size.height - pad),
+  };
 }
 
 // SCA フレーバーホイールの木を SVG で描画する。
-// ドラッグでパン、ホイール / ピンチ / ボタンでズームできる
+// ドラッグでパン、ホイール / ピンチ / ボタンでズームできる。
+// 画面外に伸びるエッジには行き先ノードのラベルを出し、押すとそこへ移動する
 export function FlavorTreeView({ highlightIds = [] }: Props) {
   const layout = useMemo(
     () => layoutFlavorTree(FLAVOR_TREE, highlightIds),
     [highlightIds],
   );
   const containerRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<ViewTransform>({ x: 0, y: 0, k: 0.55 });
+  const [size, setSize] = useState<Size>({ width: 0, height: 0 });
+  const [view, setView] = useState<ViewTransform>(DEFAULT_VIEW);
   // ポインタ操作の作業領域（再レンダリング不要な値）
   const pointers = useRef(new Map<number, { x: number; y: number }>());
 
-  // 指定した画面座標を不動点としてスケールを変える
-  const zoomAt = useCallback((px: number, py: number, factor: number) => {
-    setView((v) => {
-      const k = clampScale(v.k * factor);
-      const scale = k / v.k;
-      return { k, x: px - (px - v.x) * scale, y: py - (py - v.y) * scale };
-    });
-  }, []);
-
-  function zoomAtCenter(factor: number) {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (rect) zoomAt(rect.width / 2, rect.height / 2, factor);
-  }
-
-  // 強調表示があるときは、強調された枝が収まる位置・倍率で開始する
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || !layout.hasHighlight) return;
-    const highlighted = layout.nodes.filter((n) => n.highlighted);
-    if (highlighted.length === 0) return;
-    const xs = highlighted.map((n) => n.x);
-    const ys = highlighted.map((n) => n.y);
-    const rect = el.getBoundingClientRect();
-    const k = clampScale(
-      Math.min(1, rect.height / (Math.max(...ys) - Math.min(...ys) + 160)),
+    if (!el) return;
+    const observer = new ResizeObserver(() =>
+      setSize({ width: el.clientWidth, height: el.clientHeight }),
     );
-    setView({
-      k,
-      // ラベルが右に伸びるぶん少し左寄りに置く
-      x: rect.width / 2 - ((Math.min(...xs) + Math.max(...xs)) / 2 + 80) * k,
-      y: rect.height / 2 - ((Math.min(...ys) + Math.max(...ys)) / 2) * k,
-    });
-  }, [layout]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // どこまでパン・ズームしても、木の端の1〜2ノードぶんは画面内に残す
+  const clampView = useCallback(
+    (v: ViewTransform): ViewTransform => {
+      if (size.width === 0) return v;
+      const margin = Math.max(64, 52 * v.k);
+      return {
+        k: v.k,
+        x: clamp(v.x, margin - layout.width * v.k, size.width - margin),
+        y: clamp(v.y, margin - layout.height * v.k, size.height - margin),
+      };
+    },
+    [layout, size],
+  );
+
+  const updateView = useCallback(
+    (updater: (v: ViewTransform) => ViewTransform) => {
+      setView((v) => clampView(updater(v)));
+    },
+    [clampView],
+  );
+
+  // 指定した画面座標を不動点としてスケールを変える
+  const zoomAt = useCallback(
+    (px: number, py: number, factor: number) => {
+      updateView((v) => {
+        const k = clampScale(v.k * factor);
+        const scale = k / v.k;
+        return { k, x: px - (px - v.x) * scale, y: py - (py - v.y) * scale };
+      });
+    },
+    [updateView],
+  );
+
+  const centerOn = useCallback(
+    (node: LaidOutNode) => {
+      updateView((v) => ({
+        k: v.k,
+        x: size.width / 2 - node.x * v.k,
+        y: size.height / 2 - node.y * v.k,
+      }));
+    },
+    [updateView, size],
+  );
+
+  // 強調表示があるときは、強調された枝と、その隣り合うフレーバーが
+  // 一緒に見える位置・倍率で開始する。強調なしなら全体が収まるようにする
+  const focusInitial = useCallback(() => {
+    if (size.width === 0) return;
+    const highlighted = layout.nodes.filter((n) => n.highlighted);
+    let minX = 0;
+    let maxX = layout.width;
+    let minY = 0;
+    let maxY = layout.height;
+    if (layout.hasHighlight && highlighted.length > 0) {
+      // 隣のフレーバーと外側に伸びるラベルが入るぶんの余白
+      const pad = 120;
+      minX = Math.min(...highlighted.map((n) => n.x)) - pad;
+      maxX = Math.max(...highlighted.map((n) => n.x)) + pad;
+      minY = Math.min(...highlighted.map((n) => n.y)) - pad;
+      maxY = Math.max(...highlighted.map((n) => n.y)) + pad;
+    }
+    const k = clampScale(
+      Math.min(1.2, size.height / (maxY - minY), size.width / (maxX - minX)),
+    );
+    setView(
+      clampView({
+        k,
+        x: size.width / 2 - ((minX + maxX) / 2) * k,
+        y: size.height / 2 - ((minY + maxY) / 2) * k,
+      }),
+    );
+  }, [layout, size, clampView]);
+
+  useEffect(() => {
+    focusInitial();
+  }, [focusInitial]);
 
   // React の onWheel は passive なため、preventDefault できるよう直接登録する
   useEffect(() => {
@@ -94,7 +186,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
     const current = { x: e.clientX, y: e.clientY };
 
     if (pointers.current.size === 1) {
-      setView((v) => ({
+      updateView((v) => ({
         ...v,
         x: v.x + current.x - prev.x,
         y: v.y + current.y - prev.y,
@@ -127,6 +219,57 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
 
   const dimmed = (highlighted: boolean) => layout.hasHighlight && !highlighted;
 
+  const toScreen = (node: LaidOutNode) => ({
+    x: node.x * view.k + view.x,
+    y: node.y * view.k + view.y,
+  });
+  const onScreen = (p: { x: number; y: number }) =>
+    p.x >= 0 && p.x <= size.width && p.y >= 0 && p.y <= size.height;
+
+  // 画面内のノードから画面外へ伸びるエッジ: 行き先のラベルを画面端に出す。
+  // 葉まで出すと画面が埋まるため、分岐ノード（大分類・中分類）に限る
+  const offscreenChips =
+    size.width === 0
+      ? []
+      : layout.nodes.flatMap((node) => {
+          if (node.parentIndex === null || node.isLeaf) return [];
+          const parentPos = toScreen(layout.nodes[node.parentIndex]);
+          const nodePos = toScreen(node);
+          if (!onScreen(parentPos) || onScreen(nodePos)) return [];
+          const width = node.label.length * 11 + 20;
+          const at = edgeExitPoint(parentPos, nodePos, size, EDGE_PAD);
+          return [
+            {
+              node,
+              width,
+              at: {
+                // チップ全体が画面内に収まるよう中心座標を寄せる
+                x: clamp(
+                  at.x,
+                  EDGE_PAD + width / 2,
+                  size.width - EDGE_PAD - width / 2,
+                ),
+                y: clamp(at.y, EDGE_PAD + 11, size.height - EDGE_PAD - 11),
+              },
+            },
+          ];
+        });
+
+  // 画面端で重なったチップは下に少しずつずらす
+  for (const [i, chip] of offscreenChips.entries()) {
+    while (
+      offscreenChips
+        .slice(0, i)
+        .some(
+          (other) =>
+            Math.abs(other.at.x - chip.at.x) < (other.width + chip.width) / 2 &&
+            Math.abs(other.at.y - chip.at.y) < 24,
+        )
+    ) {
+      chip.at.y += 26;
+    }
+  }
+
   return (
     <div className="flavor-tree">
       <div
@@ -142,11 +285,16 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
             {layout.nodes.map((node) => {
               if (node.parentIndex === null) return null;
               const parent = layout.nodes[node.parentIndex];
-              const midX = (parent.x + node.x) / 2;
+              // 極座標での中間半径を制御点にした放射状の曲線
+              const rm = (parent.radius + node.radius) / 2;
+              const c1x = layout.center + rm * Math.cos(parent.angle);
+              const c1y = layout.center + rm * Math.sin(parent.angle);
+              const c2x = layout.center + rm * Math.cos(node.angle);
+              const c2y = layout.center + rm * Math.sin(node.angle);
               return (
                 <path
                   key={`link-${node.parentIndex}-${node.label}`}
-                  d={`M ${parent.x} ${parent.y} C ${midX} ${parent.y}, ${midX} ${node.y}, ${node.x} ${node.y}`}
+                  d={`M ${parent.x} ${parent.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${node.x} ${node.y}`}
                   fill="none"
                   stroke={node.color}
                   strokeWidth={node.highlighted ? 4 : 1.5}
@@ -154,44 +302,109 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                 />
               );
             })}
-            {layout.nodes.map((node) => (
-              <g
-                key={`node-${node.parentIndex}-${node.label}`}
-                transform={`translate(${node.x},${node.y})`}
-                opacity={dimmed(node.highlighted) ? 0.25 : 1}
-              >
-                <circle r={node.isLeaf ? 3.5 : 5.5} fill={node.color} />
-                <text
-                  x={node.isLeaf ? 9 : 10}
-                  y={node.isLeaf ? 4 : -8}
-                  fontSize={node.depth <= 1 ? 15 : 12}
-                  fontWeight={node.depth <= 1 || node.highlighted ? 700 : 400}
-                  fill="var(--color-ink)"
+            {layout.nodes.map((node) => {
+              // ラベルは中心から外向きに回転させ、左半分では反転して読めるようにする
+              const deg = (node.angle * 180) / Math.PI;
+              const flipped = deg > 90 && deg < 270;
+              return (
+                <g
+                  key={`node-${node.parentIndex}-${node.label}`}
+                  transform={`translate(${node.x},${node.y})`}
+                  opacity={dimmed(node.highlighted) ? 0.25 : 1}
                 >
-                  {node.icon ? `${node.icon} ` : ""}
+                  <circle r={node.isLeaf ? 3.5 : 5.5} fill={node.color} />
+                  {node.depth === 0 ? (
+                    <text
+                      y={-12}
+                      textAnchor="middle"
+                      fontSize={15}
+                      fontWeight={700}
+                      fill="var(--color-ink)"
+                    >
+                      {node.icon} {node.label}
+                    </text>
+                  ) : (
+                    <text
+                      transform={`rotate(${flipped ? deg - 180 : deg})`}
+                      x={flipped ? -10 : 10}
+                      y={node.isLeaf ? 4 : -7}
+                      textAnchor={flipped ? "end" : "start"}
+                      fontSize={node.depth === 1 ? 14 : 12}
+                      fontWeight={
+                        node.depth === 1 || node.highlighted ? 700 : 400
+                      }
+                      fill="var(--color-ink)"
+                    >
+                      {node.icon ? `${node.icon} ` : ""}
+                      {node.label}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+          {offscreenChips.map(({ node, at }) => {
+            const width = node.label.length * 11 + 20;
+            // チップ全体が画面内に収まるよう中心座標を寄せる
+            at = {
+              x: clamp(
+                at.x,
+                EDGE_PAD + width / 2,
+                size.width - EDGE_PAD - width / 2,
+              ),
+              y: clamp(at.y, EDGE_PAD + 11, size.height - EDGE_PAD - 11),
+            };
+            return (
+              // biome-ignore lint/a11y/useSemanticElements: SVG 内のためボタン要素は使えない
+              <g
+                key={`chip-${node.parentIndex}-${node.label}`}
+                transform={`translate(${at.x},${at.y})`}
+                opacity={dimmed(node.highlighted) ? 0.4 : 0.95}
+                cursor="pointer"
+                role="button"
+                tabIndex={0}
+                aria-label={`${node.label} へ移動`}
+                onClick={() => centerOn(node)}
+                onKeyDown={(e) => e.key === "Enter" && centerOn(node)}
+              >
+                <rect
+                  x={-width / 2}
+                  y={-11}
+                  width={width}
+                  height={22}
+                  rx={11}
+                  fill={node.color}
+                />
+                <text
+                  textAnchor="middle"
+                  y={4}
+                  fontSize={11}
+                  fontWeight={600}
+                  fill="#fff"
+                >
                   {node.label}
                 </text>
               </g>
-            ))}
-          </g>
+            );
+          })}
         </svg>
       </div>
       <div className="flavor-tree-controls">
         <button
           type="button"
           aria-label="拡大"
-          onClick={() => zoomAtCenter(1.4)}
+          onClick={() => zoomAt(size.width / 2, size.height / 2, 1.4)}
         >
           ＋
         </button>
         <button
           type="button"
           aria-label="縮小"
-          onClick={() => zoomAtCenter(1 / 1.4)}
+          onClick={() => zoomAt(size.width / 2, size.height / 2, 1 / 1.4)}
         >
           −
         </button>
-        <button type="button" onClick={() => setView({ x: 0, y: 0, k: 0.55 })}>
+        <button type="button" onClick={focusInitial}>
           リセット
         </button>
       </div>

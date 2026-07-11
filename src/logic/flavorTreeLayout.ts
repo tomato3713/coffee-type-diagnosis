@@ -7,6 +7,9 @@ export interface LaidOutNode {
   color: string;
   x: number;
   y: number;
+  // 中心からの角度（ラジアン、x軸正方向が0）と距離。ラベルの回転に使う
+  angle: number;
+  radius: number;
   depth: number;
   isLeaf: boolean;
   highlighted: boolean;
@@ -17,24 +20,31 @@ export interface FlavorTreeLayout {
   nodes: LaidOutNode[];
   width: number;
   height: number;
+  center: number;
   // 強調対象が1つでもあるか（false なら全体を通常表示）
   hasHighlight: boolean;
 }
 
-const COL_WIDTH = 230;
-const ROW_HEIGHT = 26;
-const PADDING = 24;
+// 階層1つぶんの半径と、最外周のラベル用の余白
+export const LEVEL_RADIUS = 130;
+export const LABEL_SPACE = 170;
 
-// 木を左→右のレイアウトに配置する。葉を上から等間隔に並べ、
-// 内部ノードは子の中央に置く。highlightIds に対応するノードは
+function countLeaves(node: FlavorTreeNode): number {
+  if (!node.children?.length) return 1;
+  return node.children.reduce((sum, child) => sum + countLeaves(child), 0);
+}
+
+// 木を根を中心とした放射状（360度）に配置する。葉を円周上に等間隔で並べ、
+// 内部ノードは子の角度の中央に置く。highlightIds に対応するノードは
 // その祖先と子孫ごと highlighted になる
 export function layoutFlavorTree(
   root: FlavorTreeNode,
   highlightIds: FlavorCategoryId[] = [],
 ): FlavorTreeLayout {
   const highlightSet = new Set(highlightIds);
+  const totalLeaves = countLeaves(root);
   const nodes: LaidOutNode[] = [];
-  let leafCount = 0;
+  let leafIndex = 0;
   let maxDepth = 0;
 
   function visit(
@@ -43,7 +53,7 @@ export function layoutFlavorTree(
     parentIndex: number | null,
     color: string,
     inheritedHighlight: boolean,
-  ): { index: number; y: number; anyHighlight: boolean } {
+  ): { angle: number; anyHighlight: boolean } {
     const ownColor = node.color ?? color;
     const tagged =
       inheritedHighlight ||
@@ -55,8 +65,10 @@ export function layoutFlavorTree(
       label: node.label,
       icon: node.icon,
       color: ownColor,
-      x: PADDING + depth * COL_WIDTH,
+      x: 0,
       y: 0,
+      angle: 0,
+      radius: depth * LEVEL_RADIUS,
       depth,
       isLeaf: !node.children?.length,
       highlighted: tagged,
@@ -66,28 +78,36 @@ export function layoutFlavorTree(
 
     let anyHighlight = tagged;
     if (node.children?.length) {
-      const childYs: number[] = [];
+      const childAngles: number[] = [];
       for (const child of node.children) {
         const result = visit(child, depth + 1, index, ownColor, tagged);
-        childYs.push(result.y);
+        childAngles.push(result.angle);
         anyHighlight ||= result.anyHighlight;
       }
-      laidOut.y = (childYs[0] + childYs[childYs.length - 1]) / 2;
+      laidOut.angle =
+        (childAngles[0] + childAngles[childAngles.length - 1]) / 2;
     } else {
-      laidOut.y = PADDING + leafCount * ROW_HEIGHT;
-      leafCount++;
+      laidOut.angle = (leafIndex / totalLeaves) * 2 * Math.PI;
+      leafIndex++;
     }
     // 子孫に強調対象がいれば、根までの経路も強調する
     laidOut.highlighted ||= anyHighlight;
-    return { index, y: laidOut.y, anyHighlight };
+    return { angle: laidOut.angle, anyHighlight };
   }
 
   visit(root, 0, null, root.color ?? "#6f4e37", false);
 
+  const center = maxDepth * LEVEL_RADIUS + LABEL_SPACE;
+  for (const node of nodes) {
+    node.x = center + node.radius * Math.cos(node.angle);
+    node.y = center + node.radius * Math.sin(node.angle);
+  }
+
   return {
     nodes,
-    width: PADDING * 2 + (maxDepth + 1) * COL_WIDTH,
-    height: PADDING * 2 + leafCount * ROW_HEIGHT,
+    width: center * 2,
+    height: center * 2,
+    center,
     hasHighlight: highlightSet.size > 0,
   };
 }

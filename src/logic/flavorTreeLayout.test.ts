@@ -40,10 +40,23 @@ describe("layoutFlavorTree", () => {
     }
   });
 
-  it("葉は重ならない Y 座標を持つ", () => {
+  it("葉は重ならない角度で全周（360度）に分布する", () => {
     const { nodes } = layoutFlavorTree(FLAVOR_TREE);
-    const ys = nodes.filter((n) => n.isLeaf).map((n) => n.y);
-    expect(new Set(ys).size).toBe(ys.length);
+    const angles = nodes.filter((n) => n.isLeaf).map((n) => n.angle);
+    expect(new Set(angles).size).toBe(angles.length);
+    expect(Math.min(...angles)).toBe(0);
+    expect(Math.max(...angles)).toBeGreaterThan((2 * Math.PI * 3) / 4);
+  });
+
+  it("根は中心に置かれ、深さに応じて中心から遠ざかる", () => {
+    const { nodes, center } = layoutFlavorTree(FLAVOR_TREE);
+    expect(nodes[0].x).toBe(center);
+    expect(nodes[0].y).toBe(center);
+    for (const node of nodes.slice(1)) {
+      const distance = Math.hypot(node.x - center, node.y - center);
+      expect(distance).toBeCloseTo(node.radius, 6);
+      expect(node.radius).toBeGreaterThan(0);
+    }
   });
 
   it("強調なしでは hasHighlight が false になり、全ノード非強調になる", () => {
