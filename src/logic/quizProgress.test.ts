@@ -28,37 +28,41 @@ function simulateProgress(
 }
 
 describe("quizProgress", () => {
-  it("基本質問に1問答えるごとに value が1ずつ進む", () => {
-    const steps = simulateProgress("fruity").slice(0, QUESTIONS.length);
-    expect(steps.map((s) => s.value)).toEqual(
-      Array.from({ length: QUESTIONS.length }, (_, i) => i),
-    );
-    expect(steps.every((s) => s.max === QUESTIONS.length)).toBe(true);
+  it("1問答えるごとに value が1ずつ進み、質問全体を通じて後退しない", () => {
+    for (const branch of ["fruity", "nutty"] as const) {
+      const steps = simulateProgress(branch);
+      expect(steps.map((s) => s.value)).toEqual(steps.map((_, i) => i));
+    }
   });
 
   it.each([
     "fruity",
     "nutty",
-  ] as const)("%s の深掘り質問に1問答えるごとに value が1ずつ進み、基本質問からの境目で0に戻る", (branch) => {
+  ] as const)("%s は最後の回答時点で value が max に一致する（分岐確定後の実際の質問数）", (branch) => {
     const flavorQuestionCount = FLAVOR_QUESTIONS[branch].length;
-    const steps = simulateProgress(branch).slice(QUESTIONS.length);
-    expect(steps.map((s) => s.value)).toEqual(
-      Array.from({ length: flavorQuestionCount }, (_, i) => i),
-    );
-    expect(steps.every((s) => s.max === flavorQuestionCount)).toBe(true);
+    const steps = simulateProgress(branch);
+    const last = steps[steps.length - 1];
+    expect(last.value).toBe(QUESTIONS.length + flavorQuestionCount - 1);
+    expect(last.max).toBe(QUESTIONS.length + flavorQuestionCount);
   });
 
-  it("回答を進めるだけで value が後戻りすることはない（分岐の境目を除く）", () => {
+  it("分岐が確定するまでの max は、両分岐のうち質問数が多い方を見積もりとして使う", () => {
+    const maxFlavorQuestionCount = Math.max(
+      ...Object.values(FLAVOR_QUESTIONS).map((qs) => qs.length),
+    );
+    for (const branch of ["fruity", "nutty"] as const) {
+      const steps = simulateProgress(branch).slice(0, QUESTIONS.length);
+      expect(
+        steps.every((s) => s.max === QUESTIONS.length + maxFlavorQuestionCount),
+      ).toBe(true);
+    }
+  });
+
+  it("max は分岐確定後、減ることはあっても value を追い越されない", () => {
     for (const branch of ["fruity", "nutty"] as const) {
       const steps = simulateProgress(branch);
-      for (let i = 1; i < steps.length; i++) {
-        const sameStage = steps[i].max === steps[i - 1].max;
-        if (sameStage) {
-          expect(steps[i].value).toBe(steps[i - 1].value + 1);
-        } else {
-          // 基本質問から深掘り質問へ切り替わった直後は 0 から再開する
-          expect(steps[i].value).toBe(0);
-        }
+      for (const step of steps) {
+        expect(step.value).toBeLessThanOrEqual(step.max);
       }
     }
   });
