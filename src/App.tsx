@@ -6,32 +6,34 @@ import { SharedResultScreen } from "./components/SharedResultScreen";
 import { StartScreen } from "./components/StartScreen";
 import { diagnose, diagnoseFlavor, flavorBranch } from "./logic/diagnose";
 import {
+  buildResultHash,
+  buildWheelHash,
   decodeShareQuery,
-  encodeShareQuery,
+  parseHashRoute,
+  RESULT_PATH,
   type SharedResult,
+  WHEEL_PATH,
 } from "./logic/share";
 import { loadHistory, saveEntry } from "./storage/history";
-import type { FlavorCategoryId, HistoryEntry } from "./types";
+import type { HistoryEntry } from "./types";
 
 type Screen =
   | { name: "start" }
   | { name: "quiz" }
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
-  | { name: "tree"; highlight: FlavorCategoryId[] };
+  | { name: "tree"; highlight: SharedResult | null };
 
-// フレーバーホイールはハッシュパス（#/wheel）で分ける。
-// GitHub Pages のような静的ホスティングでも直接アクセスが 404 にならない
-const WHEEL_HASH = "#/wheel";
-
-// URL から表示すべき画面を導出する。?t=&f= の結果が自分の診断
-// （lastEntry）と一致するなら、保存や日付のある結果画面として表示する
+// URL（#/result?t=&f= / #/wheel?t=&f=）から表示すべき画面を導出する。
+// 結果が自分の診断（lastEntry）と一致するなら、保存や日付のある
+// 結果画面として表示する
 function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
-  const shared = decodeShareQuery(location.search);
-  if (location.hash.startsWith(WHEEL_HASH)) {
-    return { name: "tree", highlight: shared?.flavorIds ?? [] };
+  const { path, query } = parseHashRoute(location.hash);
+  const shared = decodeShareQuery(query);
+  if (path === WHEEL_PATH) {
+    return { name: "tree", highlight: shared };
   }
-  if (shared) {
+  if (path === RESULT_PATH && shared) {
     if (
       lastEntry &&
       lastEntry.typeId === shared.typeId &&
@@ -44,12 +46,8 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
   return { name: "start" };
 }
 
-// 表示中の結果を URL に反映する（シェア URL と同じ形式）。null でクエリを外す
-function syncUrlQuery(result: SharedResult | null) {
-  const query = result ? `?${encodeShareQuery(result)}` : "";
-  if (location.search !== query || location.hash) {
-    window.history.replaceState(null, "", `${location.pathname}${query}`);
-  }
+function replaceHash(hash: string) {
+  window.history.replaceState(null, "", `${location.pathname}${hash}`);
 }
 
 function App() {
@@ -66,18 +64,20 @@ function App() {
   }, []);
 
   function startQuiz() {
-    syncUrlQuery(null);
+    replaceHash("");
     setScreen({ name: "quiz" });
   }
 
   function backToTop() {
-    syncUrlQuery(null);
+    replaceHash("");
     setScreen({ name: "start" });
   }
 
   function showResult(entry: HistoryEntry) {
     lastEntryRef.current = entry;
-    syncUrlQuery({ typeId: entry.typeId, flavorIds: entry.flavorIds });
+    replaceHash(
+      buildResultHash({ typeId: entry.typeId, flavorIds: entry.flavorIds }),
+    );
     setScreen({ name: "result", entry });
   }
 
@@ -96,28 +96,26 @@ function App() {
     showResult(entry);
   }
 
-  // 履歴に積んでツリーページへ。強調対象は URL の ?t=&f= から導出される
-  function showTree() {
+  // 履歴に積んでツリーページへ。ブラウザの戻るで呼び出し元へ戻れる
+  function showTree(highlight: SharedResult | null) {
     window.history.pushState(
       null,
       "",
-      `${location.pathname}${location.search}${WHEEL_HASH}`,
+      `${location.pathname}${buildWheelHash(highlight)}`,
     );
-    setScreen(screenFromLocation(lastEntryRef.current));
+    setScreen({ name: "tree", highlight });
   }
 
   function backFromTree() {
     if (window.history.length > 1) {
       window.history.back();
-    } else {
-      // 直接 #/wheel を開いた場合など、戻り先がないときはハッシュだけ外す
-      window.history.replaceState(
-        null,
-        "",
-        `${location.pathname}${location.search}`,
-      );
-      setScreen(screenFromLocation(lastEntryRef.current));
+      return;
     }
+    // 直接 #/wheel を開いた場合など戻り先がないときは、結果があれば
+    // 結果画面へ、なければトップへ
+    const highlight = screen.name === "tree" ? screen.highlight : null;
+    replaceHash(highlight ? buildResultHash(highlight) : "");
+    setScreen(screenFromLocation(lastEntryRef.current));
   }
 
   return (
@@ -127,7 +125,7 @@ function App() {
           history={history}
           onStart={startQuiz}
           onSelect={showResult}
-          onShowTree={showTree}
+          onShowTree={() => showTree(null)}
         />
       )}
       {screen.name === "quiz" && <QuizScreen onComplete={complete} />}
@@ -136,24 +134,27 @@ function App() {
           entry={screen.entry}
           onRestart={startQuiz}
           onBackToTop={backToTop}
-          onShowTree={showTree}
+          onShowTree={() =>
+            showTree({
+              typeId: screen.entry.typeId,
+              flavorIds: screen.entry.flavorIds,
+            })
+          }
         />
       )}
       {screen.name === "shared" && (
         <SharedResultScreen
           result={screen.result}
           onStart={startQuiz}
-          onShowTree={showTree}
+          onShowTree={() => showTree(screen.result)}
           onBackToTop={backToTop}
         />
       )}
       {screen.name === "tree" && (
         <FlavorTreeScreen
-          highlightIds={screen.highlight}
+          highlightIds={screen.highlight?.flavorIds ?? []}
           onBack={backFromTree}
-          backLabel={
-            decodeShareQuery(location.search) ? "診断結果に戻る" : "トップへ"
-          }
+          backLabel={screen.highlight ? "診断結果に戻る" : "トップへ"}
         />
       )}
     </main>
