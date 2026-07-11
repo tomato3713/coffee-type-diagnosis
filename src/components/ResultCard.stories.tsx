@@ -33,3 +33,10 @@ export const フレーバー1件のみ: Story = {
     diagnosedAt: "2026-07-11T09:00:00.000Z",
   },
 };
+
+export const 日付なし_シェア閲覧: Story = {
+  args: {
+    type: RESULT_TYPES["acid-light-fruity-straight"],
+    flavors: [findFlavorCategory("floral"), findFlavorCategory("berry")],
+  },
+};

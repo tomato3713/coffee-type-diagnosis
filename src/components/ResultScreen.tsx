@@ -1,8 +1,9 @@
-import { toPng } from "html-to-image";
 import { useRef, useState } from "react";
 import { findFlavorCategory, RESULT_TYPES } from "../data/results";
 import type { HistoryEntry } from "../types";
+import { captureCardPng } from "./cardCapture";
 import { ResultCard } from "./ResultCard";
+import { ShareButtons } from "./ShareButtons";
 
 interface Props {
   entry: HistoryEntry;
@@ -20,12 +21,7 @@ export function ResultScreen({ entry, onRestart, onBackToTop }: Props) {
     if (!cardRef.current) return;
     setSaving(true);
     try {
-      // Safari でフォント未ロードのまま描画されるのを防ぐ
-      await document.fonts.ready;
-      const dataUrl = await toPng(cardRef.current, {
-        pixelRatio: 2,
-        backgroundColor: "#fffdfa",
-      });
+      const dataUrl = await captureCardPng(cardRef.current);
       const link = document.createElement("a");
       link.download = `coffee-type-${entry.typeId}.png`;
       link.href = dataUrl;
@@ -43,6 +39,7 @@ export function ResultScreen({ entry, onRestart, onBackToTop }: Props) {
         flavors={entry.flavorIds.map(findFlavorCategory)}
         diagnosedAt={entry.diagnosedAt}
       />
+      <ShareButtons type={type} flavorIds={entry.flavorIds} cardRef={cardRef} />
       <div className="result-actions">
         <button
           type="button"
