@@ -507,17 +507,7 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                     />
                   )}
                   <circle r={node.isLeaf ? 3.5 : 5.5} fill={node.color} />
-                  {node.depth === 0 ? (
-                    <text
-                      y={-12}
-                      textAnchor="middle"
-                      fontSize={15}
-                      fontWeight={700}
-                      fill="var(--color-ink)"
-                    >
-                      {node.icon} {node.label}
-                    </text>
-                  ) : (
+                  {node.depth === 0 ? null : (
                     <text
                       transform={`rotate(${flipped ? deg - 180 : deg})`}
                       x={flipped ? -10 : 10}
