@@ -9,9 +9,15 @@ interface Props {
   entry: HistoryEntry;
   onRestart: () => void;
   onBackToTop: () => void;
+  onShowTree: () => void;
 }
 
-export function ResultScreen({ entry, onRestart, onBackToTop }: Props) {
+export function ResultScreen({
+  entry,
+  onRestart,
+  onBackToTop,
+  onShowTree,
+}: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const type = RESULT_TYPES[entry.typeId];
@@ -48,6 +54,9 @@ export function ResultScreen({ entry, onRestart, onBackToTop }: Props) {
           disabled={saving}
         >
           {saving ? "保存中…" : "画像として保存"}
+        </button>
+        <button type="button" className="secondary-button" onClick={onShowTree}>
+          フレーバーツリーで確認する
         </button>
         <button type="button" className="secondary-button" onClick={onRestart}>
           もう一度診断する

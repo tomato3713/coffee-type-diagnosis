@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
 import { SharedResultScreen } from "./components/SharedResultScreen";
@@ -10,13 +11,14 @@ import {
   type SharedResult,
 } from "./logic/share";
 import { loadHistory, saveEntry } from "./storage/history";
-import type { HistoryEntry } from "./types";
+import type { FlavorCategoryId, HistoryEntry } from "./types";
 
 type Screen =
   | { name: "start" }
   | { name: "quiz" }
   | { name: "result"; entry: HistoryEntry }
-  | { name: "shared"; result: SharedResult };
+  | { name: "shared"; result: SharedResult }
+  | { name: "tree"; highlight: FlavorCategoryId[]; back: Screen };
 
 // 表示中の結果を URL に反映する（シェア URL と同じ形式）。null でクエリを外す
 function syncUrlQuery(result: SharedResult | null) {
@@ -63,6 +65,10 @@ function App() {
     showResult(entry);
   }
 
+  function showTree(highlight: FlavorCategoryId[]) {
+    setScreen((current) => ({ name: "tree", highlight, back: current }));
+  }
+
   return (
     <main className="app">
       {screen.name === "start" && (
@@ -70,6 +76,7 @@ function App() {
           history={history}
           onStart={startQuiz}
           onSelect={showResult}
+          onShowTree={() => showTree([])}
         />
       )}
       {screen.name === "quiz" && <QuizScreen onComplete={complete} />}
@@ -78,10 +85,21 @@ function App() {
           entry={screen.entry}
           onRestart={startQuiz}
           onBackToTop={backToTop}
+          onShowTree={() => showTree(screen.entry.flavorIds)}
         />
       )}
       {screen.name === "shared" && (
-        <SharedResultScreen result={screen.result} onStart={startQuiz} />
+        <SharedResultScreen
+          result={screen.result}
+          onStart={startQuiz}
+          onShowTree={() => showTree(screen.result.flavorIds)}
+        />
+      )}
+      {screen.name === "tree" && (
+        <FlavorTreeScreen
+          highlightIds={screen.highlight}
+          onBack={() => setScreen(screen.back)}
+        />
       )}
     </main>
   );

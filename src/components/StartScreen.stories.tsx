@@ -34,6 +34,7 @@ export const 初回訪問: Story = {
     history: [],
     onStart: () => {},
     onSelect: () => {},
+    onShowTree: () => {},
   },
 };
 

@@ -21,5 +21,6 @@ export const 診断結果: Story = {
     },
     onRestart: () => {},
     onBackToTop: () => {},
+    onShowTree: () => {},
   },
 };

@@ -5,9 +5,10 @@ interface Props {
   history: HistoryEntry[];
   onStart: () => void;
   onSelect: (entry: HistoryEntry) => void;
+  onShowTree: () => void;
 }
 
-export function StartScreen({ history, onStart, onSelect }: Props) {
+export function StartScreen({ history, onStart, onSelect, onShowTree }: Props) {
   return (
     <div className="start">
       <p className="start-emoji">☕</p>
@@ -19,6 +20,9 @@ export function StartScreen({ history, onStart, onSelect }: Props) {
       </p>
       <button type="button" className="primary-button" onClick={onStart}>
         診断をはじめる
+      </button>
+      <button type="button" className="text-button" onClick={onShowTree}>
+        SCA フレーバーホイールを見る
       </button>
       {history.length > 0 && (
         <section className="history">

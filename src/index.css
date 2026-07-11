@@ -346,3 +346,50 @@ button {
 .share-buttons > :only-child {
   grid-column: 1 / -1;
 }
+
+/* フレーバーツリー */
+.flavor-tree-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flavor-tree-lead {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.flavor-tree-canvas {
+  height: 70vh;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+
+.flavor-tree-canvas:active {
+  cursor: grabbing;
+}
+
+.flavor-tree-canvas svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.flavor-tree-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.flavor-tree-controls button {
+  padding: 8px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 700;
+}
