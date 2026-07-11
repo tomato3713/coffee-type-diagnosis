@@ -8,10 +8,16 @@ interface Props {
   result: SharedResult;
   onStart: () => void;
   onShowTree: () => void;
+  onBackToTop: () => void;
 }
 
 // シェアされた URL から開いた結果の閲覧画面。履歴には保存しない
-export function SharedResultScreen({ result, onStart, onShowTree }: Props) {
+export function SharedResultScreen({
+  result,
+  onStart,
+  onShowTree,
+  onBackToTop,
+}: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const type = RESULT_TYPES[result.typeId];
   if (!type) return null;
@@ -34,6 +40,9 @@ export function SharedResultScreen({ result, onStart, onShowTree }: Props) {
         </button>
         <button type="button" className="secondary-button" onClick={onShowTree}>
           フレーバーツリーで確認する
+        </button>
+        <button type="button" className="text-button" onClick={onBackToTop}>
+          トップへ
         </button>
       </div>
     </div>

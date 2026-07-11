@@ -5,9 +5,10 @@ import { FlavorTreeView } from "./FlavorTreeView";
 interface Props {
   highlightIds: FlavorCategoryId[];
   onBack: () => void;
+  backLabel: string;
 }
 
-export function FlavorTreeScreen({ highlightIds, onBack }: Props) {
+export function FlavorTreeScreen({ highlightIds, onBack, backLabel }: Props) {
   return (
     <div className="flavor-tree-screen">
       <h1>SCA フレーバーホイール</h1>
@@ -25,7 +26,7 @@ export function FlavorTreeScreen({ highlightIds, onBack }: Props) {
       )}
       <FlavorTreeView highlightIds={highlightIds} />
       <button type="button" className="text-button" onClick={onBack}>
-        戻る
+        {backLabel}
       </button>
     </div>
   );

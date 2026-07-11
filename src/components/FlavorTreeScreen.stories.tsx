@@ -13,6 +13,7 @@ export const 全体表示: Story = {
   args: {
     highlightIds: [],
     onBack: () => {},
+    backLabel: "トップへ",
   },
 };
 
@@ -20,5 +21,6 @@ export const 診断結果の強調表示: Story = {
   args: {
     highlightIds: ["floral", "berry"],
     onBack: () => {},
+    backLabel: "診断結果に戻る",
   },
 };

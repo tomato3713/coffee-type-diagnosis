@@ -17,5 +17,6 @@ export const シェアされた結果の閲覧: Story = {
     },
     onStart: () => {},
     onShowTree: () => {},
+    onBackToTop: () => {},
   },
 };
