@@ -17,8 +17,6 @@ export function QuizScreen({ onComplete }: Props) {
   const question = flavorQuestions
     ? flavorQuestions[flavorAnswers.length]
     : QUESTIONS[baseAnswers.length];
-  const total = QUESTIONS.length + 3;
-  const current = baseAnswers.length + flavorAnswers.length;
 
   function select(index: number) {
     if (flavorQuestions) {
@@ -32,13 +30,12 @@ export function QuizScreen({ onComplete }: Props) {
 
   return (
     <div className="quiz">
-      <p className="quiz-progress-label">
-        Q{current + 1} <span>/ {total}</span>
-        {inFlavorStage && (
-          <span className="quiz-stage">フレーバー深掘り中</span>
-        )}
-      </p>
-      <progress className="quiz-progress" value={current} max={total} />
+      {/* 深掘り質問数は分岐で変わるため、件数表示は出さずバーのみで進捗を示す */}
+      <progress
+        className="quiz-progress"
+        value={flavorQuestions ? flavorAnswers.length : baseAnswers.length}
+        max={flavorQuestions ? flavorQuestions.length : QUESTIONS.length}
+      />
       <h1 className="quiz-question">{question.text}</h1>
       <div className="quiz-choices">
         {question.choices.map((choice, i) => (
