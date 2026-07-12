@@ -1,5 +1,6 @@
 import {
   FLAVOR_QUESTIONS,
+  MAX_FLAVOR_QUESTION_COUNT,
   PROCESS_QUESTIONS,
   QUESTIONS,
   ROAST_QUESTIONS,
@@ -48,4 +49,24 @@ export function totalQuestionCount(answers: number[]): number | null {
     ROAST_QUESTIONS.length +
     PROCESS_QUESTIONS.length
   );
+}
+
+export interface QuizProgress {
+  value: number;
+  max: number;
+}
+
+// 質問画面の進捗バーの value/max。answers には表示位置までの回答列を渡す。
+// max は分岐が確定するまでは最大の分岐を見積もりとして使い
+// （value を後退させないための上限見積もり）、確定後は実際の総数になる
+export function quizProgress(answers: number[]): QuizProgress {
+  return {
+    value: answers.length,
+    max:
+      totalQuestionCount(answers) ??
+      QUESTIONS.length +
+        MAX_FLAVOR_QUESTION_COUNT +
+        ROAST_QUESTIONS.length +
+        PROCESS_QUESTIONS.length,
+  };
 }

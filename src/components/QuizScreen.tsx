@@ -1,13 +1,17 @@
 import { useState } from "react";
 import {
   FLAVOR_QUESTIONS,
+  MAX_FLAVOR_QUESTION_COUNT,
   PROCESS_QUESTIONS,
   QUESTIONS,
   ROAST_QUESTIONS,
 } from "../data/questions";
 import { flavorBranch } from "../logic/diagnose";
-import { splitAnswers, totalQuestionCount } from "../logic/quizFlow";
-import { quizProgress } from "../logic/quizProgress";
+import {
+  quizProgress,
+  splitAnswers,
+  totalQuestionCount,
+} from "../logic/quizFlow";
 
 interface Props {
   onComplete: (
@@ -24,7 +28,7 @@ interface StageQuestion {
   choices: readonly { label: string }[];
 }
 
-interface Stage {
+interface StageDef {
   label: string;
   // ナビゲーションマップに表示する短いステージ名
   short: string;
@@ -32,10 +36,6 @@ interface Stage {
   // 深掘りの分岐が確定するまでのドット数の見積もり（questions が空の間だけ使う）
   placeholderCount?: number;
 }
-
-const MAX_FLAVOR_QUESTIONS = Math.max(
-  ...Object.values(FLAVOR_QUESTIONS).map((questions) => questions.length),
-);
 
 export function QuizScreen({ onComplete }: Props) {
   // 回答は全ステージを通した1本の列で持ち、cursor が表示中の質問位置。
@@ -49,7 +49,7 @@ export function QuizScreen({ onComplete }: Props) {
     baseAnswers.length >= QUESTIONS.length
       ? FLAVOR_QUESTIONS[flavorBranch(baseAnswers)]
       : [];
-  const stages: Stage[] = [
+  const stageDefs: StageDef[] = [
     {
       label: "基本的な好みをきいています",
       short: "基本",
@@ -59,7 +59,7 @@ export function QuizScreen({ onComplete }: Props) {
       label: "好みを深掘りしています",
       short: "深掘り",
       questions: flavorQuestions,
-      placeholderCount: MAX_FLAVOR_QUESTIONS,
+      placeholderCount: MAX_FLAVOR_QUESTION_COUNT,
     },
     {
       label: "焙煎の好みをきいています",
@@ -73,36 +73,26 @@ export function QuizScreen({ onComplete }: Props) {
     },
   ];
 
-  // ナビゲーションマップ用に、各ステージの先頭質問の通し位置を求める。
+  // 各ステージに先頭質問の通し位置（offset）とドット数（count）を持たせる。
   // 分岐確定前の深掘りは見積もりドット（回答不可）でレイアウトだけ確保する
   let dotOffset = 0;
-  const mapStages = stages.map((s) => {
-    const count = s.questions.length || s.placeholderCount || 0;
-    const group = { short: s.short, offset: dotOffset, count };
+  const stages = stageDefs.map((def) => {
+    const count = def.questions.length || def.placeholderCount || 0;
+    const stage = { ...def, offset: dotOffset, count };
     dotOffset += count;
-    return group;
+    return stage;
   });
 
-  // cursor の位置にあるステージと質問を探す
-  let indexInStage = cursor;
-  let stage = stages[0];
-  for (const s of stages) {
-    if (indexInStage < s.questions.length) {
-      stage = s;
-      break;
-    }
-    indexInStage -= s.questions.length;
-  }
-  const question = stage.questions[indexInStage];
+  // cursor の位置にあるステージ。分岐確定前は深掘り以降に到達しないため、
+  // 見積もり count を含む offset でも位置がずれることはない
+  const stage = stages.find(
+    (s) => cursor < s.offset + s.questions.length && cursor >= s.offset,
+  );
+  if (!stage) return null;
+  const question = stage.questions[cursor - stage.offset];
 
   // 進捗は表示中の位置（cursor）まで。戻ればバーも戻る
-  const upToCursor = splitAnswers(answers.slice(0, cursor));
-  const progress = quizProgress(
-    upToCursor.baseAnswers,
-    upToCursor.flavorAnswers,
-    upToCursor.roastAnswers,
-    upToCursor.processAnswers,
-  );
+  const progress = quizProgress(answers.slice(0, cursor));
 
   function select(index: number) {
     // 戻った質問で同じ選択肢を選んだ場合は、以降の回答を保持して先へ進む
@@ -137,7 +127,7 @@ export function QuizScreen({ onComplete }: Props) {
       />
       {/* 段階ごとの質問マップ。回答済みの質問をタップして戻れる */}
       <nav className="quiz-map" aria-label="質問の一覧">
-        {mapStages.map((group) => (
+        {stages.map((group) => (
           <div className="quiz-map-stage" key={group.short}>
             <span className="quiz-map-label">{group.short}</span>
             <div className="quiz-map-dots">

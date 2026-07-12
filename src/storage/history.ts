@@ -1,4 +1,4 @@
-import { PROCESS_METHODS, RESULT_TYPES, ROAST_LEVELS } from "../data/results";
+import { isRoastLevel, PROCESS_METHODS, RESULT_TYPES } from "../data/results";
 import type { HistoryEntry } from "../types";
 
 const STORAGE_KEY = "coffee-type-diagnosis/history";
@@ -31,7 +31,7 @@ export function loadHistory(): HistoryEntry[] {
       (e) =>
         e.typeId in RESULT_TYPES &&
         e.process in PROCESS_METHODS &&
-        ROAST_LEVELS.some((level) => level.level === e.roast),
+        isRoastLevel(e.roast),
     );
   } catch {
     return [];

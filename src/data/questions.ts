@@ -305,3 +305,9 @@ export const FLAVOR_QUESTIONS: Record<FlavorBranch, FlavorQuestion[]> = {
     },
   ],
 };
+
+// フレーバー深掘りの分岐のうち質問数が最も多いもの。分岐確定前の
+// 進捗見積もりや、結果に含まれるフレーバー分類数の上限に使う
+export const MAX_FLAVOR_QUESTION_COUNT = Math.max(
+  ...Object.values(FLAVOR_QUESTIONS).map((questions) => questions.length),
+);

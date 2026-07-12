@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   FLAVOR_QUESTIONS,
+  MAX_FLAVOR_QUESTION_COUNT,
   PROCESS_QUESTIONS,
   QUESTIONS,
   ROAST_QUESTIONS,
 } from "../data/questions";
 import type { FlavorBranch } from "../types";
-import { splitAnswers, totalQuestionCount } from "./quizFlow";
+import { quizProgress, splitAnswers, totalQuestionCount } from "./quizFlow";
 
 // 全問 index0 は fruity、全問 index1 は nutty に分岐する
 const branchAnswerIndex: Record<FlavorBranch, number> = { fruity: 0, nutty: 1 };
@@ -81,5 +82,39 @@ describe("totalQuestionCount", () => {
     expect(totalQuestionCount(answers.slice(0, QUESTIONS.length))).toBe(
       answers.length,
     );
+  });
+});
+
+describe("quizProgress", () => {
+  it("1問答えるごとに value が1ずつ進み、常に max を超えない", () => {
+    for (const branch of ["fruity", "nutty"] as const) {
+      const answers = fullAnswers(branch);
+      for (let count = 0; count <= answers.length; count++) {
+        const progress = quizProgress(answers.slice(0, count));
+        expect(progress.value).toBe(count);
+        expect(progress.value).toBeLessThanOrEqual(progress.max);
+      }
+    }
+  });
+
+  it("分岐が確定するまでの max は、両分岐のうち質問数が多い方を見積もりとして使う", () => {
+    const estimated =
+      QUESTIONS.length +
+      MAX_FLAVOR_QUESTION_COUNT +
+      ROAST_QUESTIONS.length +
+      PROCESS_QUESTIONS.length;
+    for (let count = 0; count < QUESTIONS.length; count++) {
+      expect(quizProgress(Array(count).fill(0)).max).toBe(estimated);
+    }
+  });
+
+  it.each([
+    "fruity",
+    "nutty",
+  ] as const)("%s は分岐確定後、max が実際の総質問数に切り替わる", (branch) => {
+    const answers = fullAnswers(branch);
+    for (let count = QUESTIONS.length; count <= answers.length; count++) {
+      expect(quizProgress(answers.slice(0, count)).max).toBe(answers.length);
+    }
   });
 });

@@ -25,6 +25,16 @@ const AXIS_POLES: Record<AxisId, [string, string]> = {
 
 const AXIS_ORDER: AxisId[] = ["taste", "body", "flavor", "style"];
 
+// 回答 index から選択肢を取り出す。範囲外は例外を投げる
+function choiceAt<C>(
+  question: { id: string; choices: readonly C[] },
+  answer: number,
+): C {
+  const choice = question.choices[answer];
+  if (!choice) throw new Error(`invalid answer for ${question.id}: ${answer}`);
+  return choice;
+}
+
 // answers は QUESTIONS と同順の、選んだ選択肢の index（0 or 1）
 export function scoreAxes(answers: number[]): Record<AxisId, number> {
   const scores: Record<AxisId, number> = {
@@ -34,10 +44,8 @@ export function scoreAxes(answers: number[]): Record<AxisId, number> {
     style: 0,
   };
   QUESTIONS.forEach((question, i) => {
-    const choice = question.choices[answers[i]];
-    if (!choice)
-      throw new Error(`invalid answer for ${question.id}: ${answers[i]}`);
-    scores[choice.score.axis] += choice.score.value;
+    const { score } = choiceAt(question, answers[i]);
+    scores[score.axis] += score.value;
   });
   return scores;
 }
@@ -61,10 +69,7 @@ export function diagnose(answers: number[]): ResultTypeBase {
 export function diagnoseRoast(answers: number[]): RoastLevel {
   let sum = 0;
   ROAST_QUESTIONS.forEach((question, i) => {
-    const choice = question.choices[answers[i]];
-    if (!choice)
-      throw new Error(`invalid answer for ${question.id}: ${answers[i]}`);
-    sum += choice.weight;
+    sum += choiceAt(question, answers[i]).weight;
   });
   return (sum + 1) as RoastLevel;
 }
@@ -74,10 +79,7 @@ export function diagnoseRoast(answers: number[]): RoastLevel {
 export function diagnoseProcess(answers: number[]): ProcessMethodId {
   let bits = 0;
   PROCESS_QUESTIONS.forEach((question, i) => {
-    const choice = question.choices[answers[i]];
-    if (!choice)
-      throw new Error(`invalid answer for ${question.id}: ${answers[i]}`);
-    bits = bits * 2 + choice.bit;
+    bits = bits * 2 + choiceAt(question, answers[i]).bit;
   });
   return PROCESS_BY_ANSWERS[bits];
 }
@@ -95,10 +97,8 @@ export function diagnoseFlavor(
 ): FlavorCategory[] {
   const votes = new Map<string, number>();
   FLAVOR_QUESTIONS[branch].forEach((question, i) => {
-    const choice = question.choices[flavorAnswers[i]];
-    if (!choice)
-      throw new Error(`invalid answer for ${question.id}: ${flavorAnswers[i]}`);
-    for (const id of choice.votes) votes.set(id, (votes.get(id) ?? 0) + 1);
+    for (const id of choiceAt(question, flavorAnswers[i]).votes)
+      votes.set(id, (votes.get(id) ?? 0) + 1);
   });
   return FLAVOR_CATEGORIES.filter((c) => votes.has(c.id)).sort(
     (a, b) => (votes.get(b.id) ?? 0) - (votes.get(a.id) ?? 0),

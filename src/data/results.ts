@@ -67,6 +67,11 @@ export function findRoastLevel(level: RoastLevel): RoastLevelInfo {
   return roast;
 }
 
+// 共有 URL や localStorage など外部由来の値の検証に使う
+export function isRoastLevel(value: number): value is RoastLevel {
+  return ROAST_LEVELS.some((roast) => roast.level === value);
+}
+
 export const PROCESS_METHODS: Record<ProcessMethodId, ProcessMethod> = {
   washed: {
     id: "washed",

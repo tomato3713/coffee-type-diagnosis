@@ -8,7 +8,7 @@ import {
   xIntentUrl,
 } from "../logic/share";
 import type { FlavorCategoryId, ResultType } from "../types";
-import { captureCardPngBlob } from "./cardCapture";
+import { captureCardPngFile } from "./cardCapture";
 
 interface Props {
   type: ResultType;
@@ -36,15 +36,7 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
   async function shareViaSheet() {
     try {
       const files = cardRef.current
-        ? [
-            new File(
-              [await captureCardPngBlob(cardRef.current)],
-              `coffee-type-${type.id}.png`,
-              {
-                type: "image/png",
-              },
-            ),
-          ]
+        ? [await captureCardPngFile(cardRef.current, type.id)]
         : undefined;
       if (files && navigator.canShare?.({ files })) {
         await navigator.share({ files, text, url: shareUrl });

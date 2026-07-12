@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { composeResultType, findFlavorCategory } from "../data/results";
 import { isTouchDevice } from "../logic/device";
 import type { HistoryEntry } from "../types";
-import { captureCardPngBlob } from "./cardCapture";
+import { captureCardPngFile } from "./cardCapture";
 import { ResultCard } from "./ResultCard";
 import { ShareButtons } from "./ShareButtons";
 
@@ -28,10 +28,7 @@ export function ResultScreen({
     if (!cardRef.current) return;
     setSaving(true);
     try {
-      const blob = await captureCardPngBlob(cardRef.current);
-      const file = new File([blob], `coffee-type-${entry.typeId}.png`, {
-        type: "image/png",
-      });
+      const file = await captureCardPngFile(cardRef.current, entry.typeId);
       // スマホの <a download> は「ファイル」アプリ行きになるため、
       // 共有シートを開いて「画像を保存」で写真アプリに保存できるようにする
       if (isTouchDevice() && navigator.canShare?.({ files: [file] })) {
@@ -43,7 +40,7 @@ export function ResultScreen({
           if (e instanceof DOMException && e.name === "AbortError") return;
         }
       }
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.download = file.name;
       link.href = url;

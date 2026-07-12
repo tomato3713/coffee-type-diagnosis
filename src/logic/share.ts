@@ -1,17 +1,11 @@
-import { FLAVOR_QUESTIONS } from "../data/questions";
+import { MAX_FLAVOR_QUESTION_COUNT } from "../data/questions";
 import {
   FLAVOR_CATEGORIES,
+  isRoastLevel,
   PROCESS_METHODS,
   RESULT_TYPES,
-  ROAST_LEVELS,
 } from "../data/results";
 import type { FlavorCategoryId, ProcessMethodId, RoastLevel } from "../types";
-
-// フレーバー深掘り質問は各1票なので、結果に出るフレーバー分類は
-// 質問数が最も多い分岐の問題数を超えない
-const MAX_FLAVOR_IDS = Math.max(
-  ...Object.values(FLAVOR_QUESTIONS).map((questions) => questions.length),
-);
 
 export interface SharedResult {
   typeId: string;
@@ -64,14 +58,16 @@ export function decodeShareQuery(search: string): SharedResult | null {
   const process = params.get("p");
   const flavors = params.get("f");
   if (!typeId || !(typeId in RESULT_TYPES) || !flavors) return null;
-  if (!ROAST_LEVELS.some((level) => level.level === roast)) return null;
+  if (!isRoastLevel(roast)) return null;
   if (!process || !(process in PROCESS_METHODS)) return null;
 
+  // フレーバー深掘り質問は各1票なので、結果に出るフレーバー分類は
+  // 質問数が最も多い分岐の問題数を超えない
   const flavorIds = flavors.split(",");
   const known = new Set(FLAVOR_CATEGORIES.map((c) => c.id));
   if (
     flavorIds.length === 0 ||
-    flavorIds.length > MAX_FLAVOR_IDS ||
+    flavorIds.length > MAX_FLAVOR_QUESTION_COUNT ||
     new Set(flavorIds).size !== flavorIds.length ||
     !flavorIds.every((id) => known.has(id as FlavorCategoryId))
   ) {
@@ -79,7 +75,7 @@ export function decodeShareQuery(search: string): SharedResult | null {
   }
   return {
     typeId,
-    roast: roast as RoastLevel,
+    roast,
     process: process as ProcessMethodId,
     flavorIds: flavorIds as FlavorCategoryId[],
   };
