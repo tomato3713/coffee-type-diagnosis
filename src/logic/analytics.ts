@@ -12,8 +12,12 @@ declare global {
   }
 }
 
-function gtag(...args: unknown[]) {
-  window.dataLayer?.push(args);
+// gtag.js は dataLayer 上の Arguments オブジェクトだけをコマンドとして
+// 実行する（普通の配列は無視される）ため、公式スニペットと同じく
+// arguments をそのまま push する
+function gtag(..._args: unknown[]) {
+  // biome-ignore lint/complexity/noArguments: 上記の gtag.js の仕様のため
+  window.dataLayer?.push(arguments);
 }
 
 function withDebugMode(
