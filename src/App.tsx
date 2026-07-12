@@ -4,6 +4,7 @@ import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
 import { SharedResultScreen } from "./components/SharedResultScreen";
 import { StartScreen } from "./components/StartScreen";
+import { trackPageView } from "./logic/analytics";
 import {
   diagnose,
   diagnoseFlavor,
@@ -67,6 +68,23 @@ function sharedResultOf(entry: HistoryEntry): SharedResult {
   };
 }
 
+// GA4 に送る仮想ページパス。quiz は自身の URL を持たない（start と同じ
+// 空ハッシュ）ため、location.hash ではなく画面状態から直接導出する
+function screenPath(screen: Screen): string {
+  switch (screen.name) {
+    case "start":
+      return "/";
+    case "quiz":
+      return "/quiz";
+    case "result":
+      return "/result";
+    case "shared":
+      return "/shared";
+    case "tree":
+      return "/wheel";
+  }
+}
+
 function App() {
   const [history, setHistory] = useState(loadHistory);
   const lastEntryRef = useRef<HistoryEntry | null>(null);
@@ -79,6 +97,11 @@ function App() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  // 画面遷移のたびに GA4 へ仮想ページビューを送る
+  useEffect(() => {
+    trackPageView(screenPath(screen));
+  }, [screen]);
 
   function startQuiz() {
     replaceHash("");
