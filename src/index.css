@@ -162,6 +162,55 @@ button {
   border-radius: 3px;
 }
 
+/* 段階ごとの質問マップ */
+.quiz-map {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.quiz-map-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quiz-map-label {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.quiz-map-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.quiz-map-dot {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.quiz-map-dot.is-answered {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.quiz-map-dot.is-current {
+  border-color: var(--color-accent-dark);
+  background: var(--color-bg);
+  outline: 2px solid var(--color-accent-dark);
+  outline-offset: 1px;
+}
+
+.quiz-map-dot:disabled {
+  opacity: 0.45;
+}
+
 .quiz-question {
   margin: 32px 0;
 }
@@ -184,6 +233,32 @@ button {
 
 .quiz-choice:hover {
   border-color: var(--color-accent);
+}
+
+/* 前の質問に戻ったとき、選択済みの選択肢を示す */
+.quiz-choice.is-selected {
+  border-color: var(--color-accent);
+  background: var(--color-bg);
+  font-weight: 700;
+}
+
+.quiz-nav {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.quiz-nav-button {
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+}
+
+.quiz-nav-button:disabled {
+  color: var(--color-muted);
+  opacity: 0.5;
 }
 
 /* 結果画面 */
