@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { composeResultType, findFlavorCategory } from "../data/results";
+import { isTouchDevice } from "../logic/device";
 import type { HistoryEntry } from "../types";
-import { captureCardPng } from "./cardCapture";
+import { captureCardPngBlob } from "./cardCapture";
 import { ResultCard } from "./ResultCard";
 import { ShareButtons } from "./ShareButtons";
 
@@ -27,11 +28,27 @@ export function ResultScreen({
     if (!cardRef.current) return;
     setSaving(true);
     try {
-      const dataUrl = await captureCardPng(cardRef.current);
+      const blob = await captureCardPngBlob(cardRef.current);
+      const file = new File([blob], `coffee-type-${entry.typeId}.png`, {
+        type: "image/png",
+      });
+      // スマホの <a download> は「ファイル」アプリ行きになるため、
+      // 共有シートを開いて「画像を保存」で写真アプリに保存できるようにする
+      if (isTouchDevice() && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          return;
+        } catch (e) {
+          // キャンセルは何もしない。それ以外はダウンロードに縮退する
+          if (e instanceof DOMException && e.name === "AbortError") return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `coffee-type-${entry.typeId}.png`;
-      link.href = dataUrl;
+      link.download = file.name;
+      link.href = url;
       link.click();
+      URL.revokeObjectURL(url);
     } finally {
       setSaving(false);
     }
