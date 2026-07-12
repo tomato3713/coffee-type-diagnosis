@@ -59,12 +59,40 @@ export interface FlavorQuestion {
   choices: [FlavorChoice, FlavorChoice];
 }
 
+// 焙煎度は浅い方から 1（ライトロースト）〜 8（イタリアンロースト）の8段階
+export type RoastLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+export interface RoastLevelInfo {
+  level: RoastLevel;
+  label: string;
+  // 焙煎後の豆の色。スケール表示に使う
+  color: string;
+  description: string;
+}
+
+export type ProcessMethodId =
+  | "washed"
+  | "natural"
+  | "honey"
+  | "white-honey"
+  | "yellow-honey"
+  | "sumatra"
+  | "anaerobic";
+
+export interface ProcessMethod {
+  id: ProcessMethodId;
+  label: string;
+  description: string;
+}
+
 export interface ResultType {
   id: string;
   name: string;
   variety: string;
   origin: string;
   brewing: string;
+  roast: RoastLevel;
+  process: ProcessMethodId;
   description: string;
 }
 

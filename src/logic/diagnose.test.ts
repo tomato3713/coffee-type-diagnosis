@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
 import {
   FLAVOR_CATEGORIES,
+  PROCESS_METHODS,
   RESULT_TYPES,
+  ROAST_LEVELS,
   SCA_WHEEL_CATEGORIES,
 } from "../data/results";
 import type { AxisId, FlavorBranch } from "../types";
@@ -176,6 +178,21 @@ describe("診断データの整合性", () => {
     expect(new Set(Object.keys(RESULT_TYPES))).toEqual(expected);
     for (const [key, type] of Object.entries(RESULT_TYPES))
       expect(type.id).toBe(key);
+  });
+
+  it("焙煎度マスタは浅い順の8段階になっている", () => {
+    expect(ROAST_LEVELS.map((r) => r.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+  });
+
+  it("各タイプの焙煎度と精製方法はマスタに定義されている", () => {
+    const levels = new Set(ROAST_LEVELS.map((r) => r.level));
+    for (const type of Object.values(RESULT_TYPES)) {
+      expect(levels, `${type.id} の焙煎度`).toContain(type.roast);
+      expect(
+        PROCESS_METHODS[type.process],
+        `${type.id} の精製方法`,
+      ).toBeDefined();
+    }
   });
 
   it("フレーバー分類の大分類は SCA フレーバーホイールの分類リストに含まれる", () => {
