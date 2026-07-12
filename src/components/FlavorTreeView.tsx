@@ -444,16 +444,21 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
             {layout.nodes.map((node) => {
               if (node.parentIndex === null) return null;
               const parent = layout.nodes[node.parentIndex];
-              // 極座標での中間半径を制御点にした放射状の曲線
+              // 極座標での中間半径を制御点にした放射状の曲線。
+              // 根は半径0で角度が意味を持たないため、中心からは直線で伸ばす
               const rm = (parent.radius + node.radius) / 2;
               const c1x = layout.center + rm * Math.cos(parent.angle);
               const c1y = layout.center + rm * Math.sin(parent.angle);
               const c2x = layout.center + rm * Math.cos(node.angle);
               const c2y = layout.center + rm * Math.sin(node.angle);
+              const d =
+                parent.radius === 0
+                  ? `M ${parent.x} ${parent.y} L ${node.x} ${node.y}`
+                  : `M ${parent.x} ${parent.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${node.x} ${node.y}`;
               return (
                 <path
                   key={`link-${node.parentIndex}-${node.label}`}
-                  d={`M ${parent.x} ${parent.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${node.x} ${node.y}`}
+                  d={d}
                   fill="none"
                   stroke={node.color}
                   strokeWidth={node.highlighted ? 4 : 1.5}
