@@ -1,10 +1,18 @@
-import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
+import {
+  FLAVOR_QUESTIONS,
+  PROCESS_BY_ANSWERS,
+  PROCESS_QUESTIONS,
+  QUESTIONS,
+  ROAST_QUESTIONS,
+} from "../data/questions";
 import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
 import type {
   AxisId,
   FlavorBranch,
   FlavorCategory,
-  ResultType,
+  ProcessMethodId,
+  ResultTypeBase,
+  RoastLevel,
 } from "../types";
 
 // 各軸のスコア符号とタイプ id の極の対応。プラス側が後者
@@ -41,11 +49,37 @@ export function typeIdFromScores(scores: Record<AxisId, number>): string {
   ).join("-");
 }
 
-export function diagnose(answers: number[]): ResultType {
+export function diagnose(answers: number[]): ResultTypeBase {
   const id = typeIdFromScores(scoreAxes(answers));
   const result = RESULT_TYPES[id];
   if (!result) throw new Error(`unknown result type: ${id}`);
   return result;
+}
+
+// answers は ROAST_QUESTIONS と同順の選択肢 index。
+// 深煎り側の重み（4/2/1）の合計 + 1 が焙煎度になる
+export function diagnoseRoast(answers: number[]): RoastLevel {
+  let sum = 0;
+  ROAST_QUESTIONS.forEach((question, i) => {
+    const choice = question.choices[answers[i]];
+    if (!choice)
+      throw new Error(`invalid answer for ${question.id}: ${answers[i]}`);
+    sum += choice.weight;
+  });
+  return (sum + 1) as RoastLevel;
+}
+
+// answers は PROCESS_QUESTIONS と同順の選択肢 index。
+// 3問のビットを並べた値で PROCESS_BY_ANSWERS を引く
+export function diagnoseProcess(answers: number[]): ProcessMethodId {
+  let bits = 0;
+  PROCESS_QUESTIONS.forEach((question, i) => {
+    const choice = question.choices[answers[i]];
+    if (!choice)
+      throw new Error(`invalid answer for ${question.id}: ${answers[i]}`);
+    bits = bits * 2 + choice.bit;
+  });
+  return PROCESS_BY_ANSWERS[bits];
 }
 
 export function flavorBranch(answers: number[]): FlavorBranch {

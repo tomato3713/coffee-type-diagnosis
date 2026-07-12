@@ -22,6 +22,8 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
     `${location.origin}${import.meta.env.BASE_URL}`,
     {
       typeId: type.id,
+      roast: type.roast,
+      process: type.process,
       flavorIds,
     },
   );

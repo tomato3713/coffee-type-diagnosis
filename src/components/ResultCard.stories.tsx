@@ -12,7 +12,11 @@ type Story = StoryObj<typeof meta>;
 
 export const フルーティ系タイプ: Story = {
   args: {
-    type: RESULT_TYPES["acid-light-fruity-straight"],
+    type: {
+      ...RESULT_TYPES["acid-light-fruity-straight"],
+      roast: 2,
+      process: "washed",
+    },
     flavors: [findFlavorCategory("floral"), findFlavorCategory("berry")],
     diagnosedAt: "2026-07-11T09:00:00.000Z",
   },
@@ -20,7 +24,11 @@ export const フルーティ系タイプ: Story = {
 
 export const ナッティ系タイプ: Story = {
   args: {
-    type: RESULT_TYPES["bitter-rich-nutty-milk"],
+    type: {
+      ...RESULT_TYPES["bitter-rich-nutty-milk"],
+      roast: 8,
+      process: "natural",
+    },
     flavors: [findFlavorCategory("burnt"), findFlavorCategory("sweet")],
     diagnosedAt: "2026-07-11T09:00:00.000Z",
   },
@@ -28,7 +36,11 @@ export const ナッティ系タイプ: Story = {
 
 export const フレーバー1件のみ: Story = {
   args: {
-    type: RESULT_TYPES["bitter-light-nutty-straight"],
+    type: {
+      ...RESULT_TYPES["bitter-light-nutty-straight"],
+      roast: 5,
+      process: "anaerobic",
+    },
     flavors: [findFlavorCategory("nutty")],
     diagnosedAt: "2026-07-11T09:00:00.000Z",
   },
@@ -36,7 +48,11 @@ export const フレーバー1件のみ: Story = {
 
 export const 日付なし_シェア閲覧: Story = {
   args: {
-    type: RESULT_TYPES["acid-light-fruity-straight"],
+    type: {
+      ...RESULT_TYPES["acid-light-fruity-straight"],
+      roast: 2,
+      process: "white-honey",
+    },
     flavors: [findFlavorCategory("floral"), findFlavorCategory("berry")],
   },
 };

@@ -9,9 +9,13 @@ function createEntry(overrides: Partial<HistoryEntry> = {}): HistoryEntry {
     id: crypto.randomUUID(),
     diagnosedAt: "2026-07-11T00:00:00.000Z",
     typeId: "acid-light-fruity-straight",
+    roast: 2,
+    process: "washed",
     flavorIds: ["floral", "berry"],
     baseAnswers: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     flavorAnswers: [0, 0, 0],
+    roastAnswers: [0, 0, 0],
+    processAnswers: [0, 0, 0],
     ...overrides,
   };
 }
@@ -49,20 +53,26 @@ describe("loadHistory / saveEntry", () => {
     expect(loadHistory()).toEqual([]);
   });
 
-  it("未知の version のデータは捨てられる", () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ version: 99, entries: [createEntry()] }),
-    );
-    expect(loadHistory()).toEqual([]);
+  it("version が一致しないデータは捨てられる（旧バージョン含む）", () => {
+    for (const version of [1, 99]) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ version, entries: [createEntry()] }),
+      );
+      expect(loadHistory()).toEqual([]);
+    }
   });
 
-  it("未知の typeId のエントリは捨てられる", () => {
+  it("未知の typeId・精製方法・範囲外の焙煎度のエントリは捨てられる", () => {
     const known = createEntry();
-    const unknown = createEntry({ typeId: "no-such-type" });
+    const invalid = [
+      createEntry({ typeId: "no-such-type" }),
+      createEntry({ process: "no-such-process" as HistoryEntry["process"] }),
+      createEntry({ roast: 9 as HistoryEntry["roast"] }),
+    ];
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: 1, entries: [unknown, known] }),
+      JSON.stringify({ version: 2, entries: [...invalid, known] }),
     );
     expect(loadHistory().map((e) => e.id)).toEqual([known.id]);
   });

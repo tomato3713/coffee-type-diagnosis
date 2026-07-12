@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { findFlavorCategory, RESULT_TYPES } from "../data/results";
+import { composeResultType, findFlavorCategory } from "../data/results";
 import type { HistoryEntry } from "../types";
 import { captureCardPng } from "./cardCapture";
 import { ResultCard } from "./ResultCard";
@@ -20,7 +20,7 @@ export function ResultScreen({
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
-  const type = RESULT_TYPES[entry.typeId];
+  const type = composeResultType(entry.typeId, entry.roast, entry.process);
   if (!type) return null;
 
   async function download() {

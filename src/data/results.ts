@@ -4,6 +4,7 @@ import type {
   ProcessMethod,
   ProcessMethodId,
   ResultType,
+  ResultTypeBase,
   RoastLevel,
   RoastLevelInfo,
 } from "../types";
@@ -252,18 +253,26 @@ export function findFlavorCategory(id: FlavorCategoryId): FlavorCategory {
   return category;
 }
 
+// タイプの基本情報に、独立に診断された焙煎度と精製方法を合成して診断結果を作る
+export function composeResultType(
+  typeId: string,
+  roast: RoastLevel,
+  process: ProcessMethodId,
+): ResultType | null {
+  const base = RESULT_TYPES[typeId];
+  return base ? { ...base, roast, process } : null;
+}
+
 // キーは `taste-body-flavor-style` の4極の組み合わせ（2^4 = 16タイプ）
-export const RESULT_TYPES: Record<string, ResultType> = {
+export const RESULT_TYPES: Record<string, ResultTypeBase> = {
   "acid-light-fruity-straight": {
     id: "acid-light-fruity-straight",
     name: "華やかシングルオリジン型",
     variety: "エアルーム（エチオピア原種）",
     origin: "エチオピア イルガチェフェ",
-    brewing: "浅煎りをペーパードリップで、ブラックのまま",
-    roast: 2,
-    process: "washed",
+    brewing: "ペーパードリップで、ブラックのまま",
     description:
-      "紅茶のように軽やかで華やかな一杯が似合うタイプ。浅煎りの個性豊かなシングルオリジンをぜひそのまま楽しんで。",
+      "紅茶のように軽やかで華やかな一杯が似合うタイプ。個性豊かなシングルオリジンをぜひそのまま楽しんで。",
   },
   "acid-light-fruity-milk": {
     id: "acid-light-fruity-milk",
@@ -271,8 +280,6 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "SL28・SL34",
     origin: "ケニア",
     brewing: "水出しアイスコーヒーで。好みで少量のミルクを",
-    roast: 3,
-    process: "washed",
     description:
       "果実感のある明るい味わいを気軽に楽しみたいタイプ。ジューシーなケニアの水出しはミルクとの相性も抜群。",
   },
@@ -281,9 +288,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "ハニークリア型",
     variety: "カトゥーラ（ハニープロセス）",
     origin: "コスタリカ",
-    brewing: "中煎りをハンドドリップで丁寧に",
-    roast: 4,
-    process: "white-honey",
+    brewing: "ハンドドリップで丁寧に",
     description:
       "すっきりしつつも甘みのある調和が好きなタイプ。ハニープロセスのやさしい甘さが朝の一杯にぴったり。",
   },
@@ -292,9 +297,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "まろやかスイート型",
     variety: "カトゥアイ",
     origin: "ホンジュラス",
-    brewing: "中煎りをアイスラテで",
-    roast: 4,
-    process: "yellow-honey",
+    brewing: "アイスラテで",
     description:
       "軽やかな甘みとミルクのまろやかさを楽しむタイプ。クセのない中米のコーヒーはアレンジしても素材の良さが生きる。",
   },
@@ -303,9 +306,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "高貴ゲイシャ型",
     variety: "ゲイシャ",
     origin: "パナマ",
-    brewing: "中浅煎りをじっくりハンドドリップで",
-    roast: 3,
-    process: "anaerobic",
+    brewing: "じっくりハンドドリップで",
     description:
       "香りの複雑さと余韻を静かに味わいたい探究者タイプ。世界が注目するゲイシャの華やかさと厚みをぜひ体験して。",
   },
@@ -315,8 +316,6 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "ブルボン",
     origin: "ルワンダ",
     brewing: "エアロプレスで。カフェオレにしても好相性",
-    roast: 4,
-    process: "washed",
     description:
       "果実の明るさとコクの両方を求める欲張りタイプ。オレンジのような甘さのルワンダはミルクを入れても輪郭が残る。",
   },
@@ -325,9 +324,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "バランス王道型",
     variety: "ブルボン",
     origin: "グアテマラ アンティグア",
-    brewing: "中煎りをフレンチプレスで",
-    roast: 4,
-    process: "washed",
+    brewing: "フレンチプレスで",
     description:
       "酸味・甘み・コクの調和がとれた王道の一杯が好きなタイプ。チョコのような甘さのアンティグアは外さない選択。",
   },
@@ -337,8 +334,6 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "カスティージョ",
     origin: "コロンビア",
     brewing: "エスプレッソベースのカフェラテで",
-    roast: 6,
-    process: "honey",
     description:
       "キャラメルのような甘さとミルクの一体感を楽しむタイプ。ラテにしたときの完成度はコロンビアの得意分野。",
   },
@@ -347,9 +342,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "エキゾチックモカ型",
     variety: "モカ・マタリ（ナチュラル精製）",
     origin: "イエメン",
-    brewing: "中深煎りをペーパードリップで",
-    roast: 5,
-    process: "natural",
+    brewing: "ペーパードリップで",
     description:
       "深みの中に個性的な果実感を求めるロマン派タイプ。独特の芳醇さを持つモカはコーヒーの歴史そのものの味。",
   },
@@ -359,8 +352,6 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "ブルボン系",
     origin: "タンザニア キリマンジャロ",
     brewing: "急冷アイスコーヒーで。ミルク割りもおすすめ",
-    roast: 5,
-    process: "washed",
     description:
       "しっかりした飲みごたえと爽やかさを両立したいタイプ。野性味ある果実感のキリマンジャロはアイスで映える。",
   },
@@ -369,9 +360,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "毎日ブラジル型",
     variety: "ムンドノーボ",
     origin: "ブラジル",
-    brewing: "中煎りをマグカップでたっぷりドリップ",
-    roast: 5,
-    process: "natural",
+    brewing: "マグカップでたっぷりドリップ",
     description:
       "気取らず毎日飲める安定の一杯が好きなタイプ。ナッツのような香ばしさのブラジルはデイリーコーヒーの定番。",
   },
@@ -381,8 +370,6 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "カトゥアイ",
     origin: "ブラジル サントス",
     brewing: "アイスカフェオレで",
-    roast: 6,
-    process: "natural",
     description:
       "香ばしさとミルクのやさしさでゴクゴク飲みたいタイプ。ブラジルの甘香ばしさはカフェオレのベースに最適。",
   },
@@ -391,9 +378,7 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     name: "個性派マンデリン型",
     variety: "マンデリン（アテン系）",
     origin: "インドネシア スマトラ",
-    brewing: "深煎りをフレンチプレスで",
-    roast: 7,
-    process: "sumatra",
+    brewing: "フレンチプレスで",
     description:
       "重厚さの中に独特の風味を求める個性派タイプ。アーシーでスパイシーなマンデリンは唯一無二の存在感。",
   },
@@ -403,31 +388,25 @@ export const RESULT_TYPES: Record<string, ResultType> = {
     variety: "ロブスタ",
     origin: "ベトナム",
     brewing: "ベトナム式（練乳入り）で",
-    roast: 8,
-    process: "natural",
     description:
       "ガツンとした苦味を甘さで包む刺激的な一杯が好きなタイプ。力強いロブスタと練乳の組み合わせはクセになる味。",
   },
   "bitter-rich-nutty-straight": {
     id: "bitter-rich-nutty-straight",
     name: "深煎り職人型",
-    variety: "深煎りブレンド（マンデリン×ブラジル）",
+    variety: "ブレンド（マンデリン×ブラジル）",
     origin: "インドネシア・ブラジル",
     brewing: "ネルドリップまたはエスプレッソで",
-    roast: 7,
-    process: "sumatra",
     description:
-      "ビターな余韻をじっくり味わう喫茶店スタイルが似合うタイプ。丁寧に淹れた深煎りの一杯は何よりの贅沢。",
+      "ビターな余韻をじっくり味わう喫茶店スタイルが似合うタイプ。丁寧に淹れた一杯は何よりの贅沢。",
   },
   "bitter-rich-nutty-milk": {
     id: "bitter-rich-nutty-milk",
     name: "濃厚カプチーノ型",
-    variety: "深煎りブレンド（コロンビア×ブラジル）",
+    variety: "ブレンド（コロンビア×ブラジル）",
     origin: "コロンビア・ブラジル",
     brewing: "カプチーノやカフェラテで",
-    roast: 8,
-    process: "natural",
     description:
-      "深煎りのコクとミルクの濃厚な一体感を楽しむタイプ。エスプレッソの伝統に忠実なイタリアンスタイルがおすすめ。",
+      "エスプレッソのコクとミルクの濃厚な一体感を楽しむタイプ。エスプレッソの伝統に忠実なイタリアンスタイルがおすすめ。",
   },
 };

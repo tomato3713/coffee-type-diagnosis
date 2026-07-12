@@ -13,6 +13,8 @@ export const シェアされた結果の閲覧: Story = {
   args: {
     result: {
       typeId: "acid-light-fruity-straight",
+      roast: 2,
+      process: "washed",
       flavorIds: ["floral", "berry"],
     },
     onStart: () => {},

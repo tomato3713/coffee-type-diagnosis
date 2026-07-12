@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { FLAVOR_QUESTIONS } from "../data/questions";
-import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
+import {
+  FLAVOR_CATEGORIES,
+  PROCESS_METHODS,
+  RESULT_TYPES,
+  ROAST_LEVELS,
+} from "../data/results";
 import {
   buildResultHash,
   buildShareText,
@@ -19,6 +24,8 @@ import {
 
 const sample: SharedResult = {
   typeId: "acid-light-fruity-straight",
+  roast: 2,
+  process: "washed",
   flavorIds: ["floral", "berry"],
 };
 
@@ -29,7 +36,25 @@ describe("encodeShareQuery / decodeShareQuery", () => {
 
   it("全16タイプの id がラウンドトリップできる", () => {
     for (const typeId of Object.keys(RESULT_TYPES)) {
-      const result: SharedResult = { typeId, flavorIds: ["burnt"] };
+      const result: SharedResult = {
+        typeId,
+        roast: 5,
+        process: "natural",
+        flavorIds: ["burnt"],
+      };
+      expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
+    }
+  });
+
+  it("全8段階の焙煎度と全7種の精製方法がラウンドトリップできる", () => {
+    for (const level of ROAST_LEVELS) {
+      const result: SharedResult = { ...sample, roast: level.level };
+      expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
+    }
+    for (const process of Object.keys(
+      PROCESS_METHODS,
+    ) as SharedResult["process"][]) {
+      const result: SharedResult = { ...sample, process };
       expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
     }
   });
@@ -45,19 +70,46 @@ describe("encodeShareQuery / decodeShareQuery", () => {
   });
 
   it("未知の typeId は null になる", () => {
-    expect(decodeShareQuery("t=no-such-type&f=floral")).toBeNull();
+    expect(decodeShareQuery("t=no-such-type&r=2&p=washed&f=floral")).toBeNull();
   });
 
   it("未知の flavorId が含まれると null になる", () => {
     expect(
-      decodeShareQuery("t=acid-light-fruity-straight&f=floral,unknown"),
+      decodeShareQuery(
+        "t=acid-light-fruity-straight&r=2&p=washed&f=floral,unknown",
+      ),
     ).toBeNull();
   });
 
-  it("t や f が欠落すると null になる", () => {
-    expect(decodeShareQuery("f=floral")).toBeNull();
-    expect(decodeShareQuery("t=acid-light-fruity-straight")).toBeNull();
-    expect(decodeShareQuery("t=acid-light-fruity-straight&f=")).toBeNull();
+  it("範囲外の焙煎度や未知の精製方法は null になる", () => {
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=0&p=washed&f=floral"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=9&p=washed&f=floral"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=abc&p=washed&f=floral"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=2&p=unknown&f=floral"),
+    ).toBeNull();
+  });
+
+  it("t・r・p・f のいずれかが欠落すると null になる", () => {
+    expect(decodeShareQuery("r=2&p=washed&f=floral")).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&p=washed&f=floral"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=2&f=floral"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=2&p=washed"),
+    ).toBeNull();
+    expect(
+      decodeShareQuery("t=acid-light-fruity-straight&r=2&p=washed&f="),
+    ).toBeNull();
     expect(decodeShareQuery("")).toBeNull();
   });
 
@@ -68,10 +120,7 @@ describe("encodeShareQuery / decodeShareQuery", () => {
 
   it("flavorId が質問数の上限までなら受理される", () => {
     const flavorIds = FLAVOR_CATEGORIES.slice(0, maxFlavorIds).map((c) => c.id);
-    const result: SharedResult = {
-      typeId: "acid-light-fruity-straight",
-      flavorIds,
-    };
+    const result: SharedResult = { ...sample, flavorIds };
     expect(decodeShareQuery(encodeShareQuery(result))).toEqual(result);
   });
 
@@ -80,10 +129,14 @@ describe("encodeShareQuery / decodeShareQuery", () => {
       (c) => c.id,
     );
     expect(
-      decodeShareQuery(`t=acid-light-fruity-straight&f=${tooMany.join(",")}`),
+      decodeShareQuery(
+        `t=acid-light-fruity-straight&r=2&p=washed&f=${tooMany.join(",")}`,
+      ),
     ).toBeNull();
     expect(
-      decodeShareQuery("t=acid-light-fruity-straight&f=floral,floral"),
+      decodeShareQuery(
+        "t=acid-light-fruity-straight&r=2&p=washed&f=floral,floral",
+      ),
     ).toBeNull();
   });
 });

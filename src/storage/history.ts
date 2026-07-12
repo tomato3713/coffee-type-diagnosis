@@ -1,9 +1,10 @@
-import { RESULT_TYPES } from "../data/results";
+import { PROCESS_METHODS, RESULT_TYPES, ROAST_LEVELS } from "../data/results";
 import type { HistoryEntry } from "../types";
 
 const STORAGE_KEY = "coffee-type-diagnosis/history";
 const MAX_ENTRIES = 50;
-const VERSION = 1;
+// v1 は焙煎度・精製方法を持たないため v2 で読み捨てる
+const VERSION = 2;
 
 interface StoredHistory {
   version: typeof VERSION;
@@ -27,7 +28,10 @@ export function loadHistory(): HistoryEntry[] {
       return [];
     }
     return (stored.entries as HistoryEntry[]).filter(
-      (e) => e.typeId in RESULT_TYPES,
+      (e) =>
+        e.typeId in RESULT_TYPES &&
+        e.process in PROCESS_METHODS &&
+        ROAST_LEVELS.some((level) => level.level === e.roast),
     );
   } catch {
     return [];

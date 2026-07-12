@@ -1,4 +1,11 @@
-import type { FlavorBranch, FlavorQuestion, Question } from "../types";
+import type {
+  FlavorBranch,
+  FlavorQuestion,
+  ProcessMethodId,
+  ProcessQuestion,
+  Question,
+  RoastQuestion,
+} from "../types";
 
 // コーヒーを直接聞かず日常の嗜好で聞くのがこの診断の設計方針。
 // 各軸を担当する質問は3問（奇数）にして同点を構造的に避けている。
@@ -123,6 +130,78 @@ export const QUESTIONS: Question[] = [
       },
     ],
   },
+];
+
+// 焙煎度を判定する質問。深煎り側の選択肢の重み（4/2/1）は2進の桁に対応し、
+// 3問の合計 0〜7 に 1 を足した値が焙煎度（1〜8）になる。
+// 回答の組み合わせで8段階すべてに到達できる
+export const ROAST_QUESTIONS: RoastQuestion[] = [
+  {
+    id: "r1",
+    text: "トーストの焼き加減は？",
+    choices: [
+      { label: "うっすら軽めの焼き色", weight: 0 },
+      { label: "こんがり濃いめの焼き色", weight: 4 },
+    ],
+  },
+  {
+    id: "r2",
+    text: "おせんべいを選ぶなら？",
+    choices: [
+      { label: "あっさり塩味のうす焼き", weight: 0 },
+      { label: "濃い口しょうゆの堅焼き", weight: 2 },
+    ],
+  },
+  {
+    id: "r3",
+    text: "プリンのカラメルは？",
+    choices: [
+      { label: "甘さを楽しむやさしいカラメル", weight: 0 },
+      { label: "ほろ苦い濃いめのカラメル", weight: 1 },
+    ],
+  },
+];
+
+// 精製方法を判定する質問。3問のビット（クリーン/芳醇・甘さ・定番/挑戦）を
+// 並べた8通りを PROCESS_BY_ANSWERS で7種の精製方法に対応づける
+export const PROCESS_QUESTIONS: ProcessQuestion[] = [
+  {
+    id: "p1",
+    text: "ジュースを選ぶなら？",
+    choices: [
+      { label: "すっきり澄んだりんごジュース", bit: 0 },
+      { label: "果肉感たっぷりの濃厚ジュース", bit: 1 },
+    ],
+  },
+  {
+    id: "p2",
+    text: "プレーンヨーグルトの食べ方は？",
+    choices: [
+      { label: "そのまま酸味を楽しむ", bit: 0 },
+      { label: "はちみつやジャムで甘みを足す", bit: 1 },
+    ],
+  },
+  {
+    id: "p3",
+    text: "旅先での食事は？",
+    choices: [
+      { label: "安心できる定番のお店", bit: 0 },
+      { label: "見たことのない料理に挑戦", bit: 1 },
+    ],
+  },
+];
+
+// index は p1 p2 p3 のビットを並べた値（p1 が最上位）。
+// 8通りの回答で7種すべての精製方法に到達できる
+export const PROCESS_BY_ANSWERS: ProcessMethodId[] = [
+  "washed", // 000 クリーン・甘さ控えめ・定番
+  "white-honey", // 001 クリーン・甘さ控えめ・挑戦
+  "honey", // 010 クリーン・甘みも・定番
+  "yellow-honey", // 011 クリーン・甘みも・挑戦
+  "sumatra", // 100 芳醇・甘さ控えめ・定番
+  "anaerobic", // 101 芳醇・甘さ控えめ・挑戦
+  "natural", // 110 芳醇・甘みも・定番
+  "anaerobic", // 111 芳醇・甘みも・挑戦
 ];
 
 // flavor 軸の結果で分岐する深掘り質問。各選択肢はフレーバー中分類に1票を投じる。

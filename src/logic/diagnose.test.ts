@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
+import {
+  FLAVOR_QUESTIONS,
+  PROCESS_BY_ANSWERS,
+  PROCESS_QUESTIONS,
+  QUESTIONS,
+  ROAST_QUESTIONS,
+} from "../data/questions";
 import {
   FLAVOR_CATEGORIES,
   PROCESS_METHODS,
@@ -11,6 +17,8 @@ import type { AxisId, FlavorBranch } from "../types";
 import {
   diagnose,
   diagnoseFlavor,
+  diagnoseProcess,
+  diagnoseRoast,
   flavorBranch,
   scoreAxes,
   typeIdFromScores,
@@ -184,15 +192,22 @@ describe("診断データの整合性", () => {
     expect(ROAST_LEVELS.map((r) => r.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
-  it("各タイプの焙煎度と精製方法はマスタに定義されている", () => {
-    const levels = new Set(ROAST_LEVELS.map((r) => r.level));
-    for (const type of Object.values(RESULT_TYPES)) {
-      expect(levels, `${type.id} の焙煎度`).toContain(type.roast);
-      expect(
-        PROCESS_METHODS[type.process],
-        `${type.id} の精製方法`,
-      ).toBeDefined();
-    }
+  it("焙煎度質問の重みは2進の桁（4/2/1）と浅煎り側の0で構成される", () => {
+    const weights = ROAST_QUESTIONS.map((q) =>
+      [...q.choices.map((c) => c.weight)].sort((a, b) => a - b),
+    );
+    expect(weights).toEqual([
+      [0, 4],
+      [0, 2],
+      [0, 1],
+    ]);
+  });
+
+  it("精製方法の対応表は回答の全組み合わせ分あり、7種すべてを網羅する", () => {
+    expect(PROCESS_BY_ANSWERS.length).toBe(2 ** PROCESS_QUESTIONS.length);
+    expect(new Set(PROCESS_BY_ANSWERS)).toEqual(
+      new Set(Object.keys(PROCESS_METHODS)),
+    );
   });
 
   it("フレーバー分類の大分類は SCA フレーバーホイールの分類リストに含まれる", () => {
@@ -220,6 +235,46 @@ describe("診断データの整合性", () => {
         }
       }
     }
+  });
+});
+
+describe("diagnoseRoast", () => {
+  it("回答の全組み合わせで1〜8の全段階に到達できる", () => {
+    const reached = new Set<number>();
+    for (let bits = 0; bits < 2 ** ROAST_QUESTIONS.length; bits++) {
+      reached.add(diagnoseRoast(bitsToAnswers(bits, ROAST_QUESTIONS.length)));
+    }
+    expect(reached).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8]));
+  });
+
+  it("全問浅煎り側なら1、全問深煎り側なら8になる", () => {
+    expect(diagnoseRoast([0, 0, 0])).toBe(1);
+    expect(diagnoseRoast([1, 1, 1])).toBe(8);
+  });
+
+  it("範囲外の回答 index は例外を投げる", () => {
+    expect(() => diagnoseRoast([0, 9, 0])).toThrow(/invalid answer/);
+  });
+});
+
+describe("diagnoseProcess", () => {
+  it("回答の全組み合わせで7種すべての精製方法に到達できる", () => {
+    const reached = new Set<string>();
+    for (let bits = 0; bits < 2 ** PROCESS_QUESTIONS.length; bits++) {
+      reached.add(
+        diagnoseProcess(bitsToAnswers(bits, PROCESS_QUESTIONS.length)),
+      );
+    }
+    expect(reached).toEqual(new Set(Object.keys(PROCESS_METHODS)));
+  });
+
+  it("回答のビット列がそのまま対応表の index になる", () => {
+    // p1=1, p2=0, p3=1 → 0b101 = 5
+    expect(diagnoseProcess([1, 0, 1])).toBe(PROCESS_BY_ANSWERS[5]);
+  });
+
+  it("範囲外の回答 index は例外を投げる", () => {
+    expect(() => diagnoseProcess([0, 0, 9])).toThrow(/invalid answer/);
   });
 });
 

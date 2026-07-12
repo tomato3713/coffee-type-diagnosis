@@ -4,7 +4,13 @@ import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
 import { SharedResultScreen } from "./components/SharedResultScreen";
 import { StartScreen } from "./components/StartScreen";
-import { diagnose, diagnoseFlavor, flavorBranch } from "./logic/diagnose";
+import {
+  diagnose,
+  diagnoseFlavor,
+  diagnoseProcess,
+  diagnoseRoast,
+  flavorBranch,
+} from "./logic/diagnose";
 import {
   buildResultHash,
   buildWheelHash,
@@ -37,6 +43,8 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
     if (
       lastEntry &&
       lastEntry.typeId === shared.typeId &&
+      lastEntry.roast === shared.roast &&
+      lastEntry.process === shared.process &&
       lastEntry.flavorIds.join() === shared.flavorIds.join()
     ) {
       return { name: "result", entry: lastEntry };
@@ -48,6 +56,15 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
 
 function replaceHash(hash: string) {
   window.history.replaceState(null, "", `${location.pathname}${hash}`);
+}
+
+function sharedResultOf(entry: HistoryEntry): SharedResult {
+  return {
+    typeId: entry.typeId,
+    roast: entry.roast,
+    process: entry.process,
+    flavorIds: entry.flavorIds,
+  };
 }
 
 function App() {
@@ -75,22 +92,29 @@ function App() {
 
   function showResult(entry: HistoryEntry) {
     lastEntryRef.current = entry;
-    replaceHash(
-      buildResultHash({ typeId: entry.typeId, flavorIds: entry.flavorIds }),
-    );
+    replaceHash(buildResultHash(sharedResultOf(entry)));
     setScreen({ name: "result", entry });
   }
 
-  function complete(baseAnswers: number[], flavorAnswers: number[]) {
+  function complete(
+    baseAnswers: number[],
+    flavorAnswers: number[],
+    roastAnswers: number[],
+    processAnswers: number[],
+  ) {
     const type = diagnose(baseAnswers);
     const flavors = diagnoseFlavor(flavorBranch(baseAnswers), flavorAnswers);
     const entry: HistoryEntry = {
       id: crypto.randomUUID(),
       diagnosedAt: new Date().toISOString(),
       typeId: type.id,
+      roast: diagnoseRoast(roastAnswers),
+      process: diagnoseProcess(processAnswers),
       flavorIds: flavors.map((f) => f.id),
       baseAnswers,
       flavorAnswers,
+      roastAnswers,
+      processAnswers,
     };
     setHistory(saveEntry(entry));
     showResult(entry);
@@ -134,12 +158,7 @@ function App() {
           entry={screen.entry}
           onRestart={startQuiz}
           onBackToTop={backToTop}
-          onShowTree={() =>
-            showTree({
-              typeId: screen.entry.typeId,
-              flavorIds: screen.entry.flavorIds,
-            })
-          }
+          onShowTree={() => showTree(sharedResultOf(screen.entry))}
         />
       )}
       {screen.name === "shared" && (

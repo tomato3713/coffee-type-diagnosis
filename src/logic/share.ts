@@ -1,6 +1,11 @@
 import { FLAVOR_QUESTIONS } from "../data/questions";
-import { FLAVOR_CATEGORIES, RESULT_TYPES } from "../data/results";
-import type { FlavorCategoryId } from "../types";
+import {
+  FLAVOR_CATEGORIES,
+  PROCESS_METHODS,
+  RESULT_TYPES,
+  ROAST_LEVELS,
+} from "../data/results";
+import type { FlavorCategoryId, ProcessMethodId, RoastLevel } from "../types";
 
 // フレーバー深掘り質問は各1票なので、結果に出るフレーバー分類は
 // 質問数が最も多い分岐の問題数を超えない
@@ -10,6 +15,8 @@ const MAX_FLAVOR_IDS = Math.max(
 
 export interface SharedResult {
   typeId: string;
+  roast: RoastLevel;
+  process: ProcessMethodId;
   flavorIds: FlavorCategoryId[];
 }
 
@@ -38,10 +45,12 @@ export function buildWheelHash(result: SharedResult | null): string {
     : `#${WHEEL_PATH}`;
 }
 
-// 例: "t=acid-light-fruity-straight&f=floral,berry"（先頭 ? なし）
+// 例: "t=acid-light-fruity-straight&r=2&p=washed&f=floral,berry"（先頭 ? なし）
 export function encodeShareQuery(result: SharedResult): string {
   const params = new URLSearchParams({
     t: result.typeId,
+    r: String(result.roast),
+    p: result.process,
     f: result.flavorIds.join(","),
   });
   return params.toString();
@@ -51,8 +60,12 @@ export function encodeShareQuery(result: SharedResult): string {
 export function decodeShareQuery(search: string): SharedResult | null {
   const params = new URLSearchParams(search);
   const typeId = params.get("t");
+  const roast = Number(params.get("r"));
+  const process = params.get("p");
   const flavors = params.get("f");
   if (!typeId || !(typeId in RESULT_TYPES) || !flavors) return null;
+  if (!ROAST_LEVELS.some((level) => level.level === roast)) return null;
+  if (!process || !(process in PROCESS_METHODS)) return null;
 
   const flavorIds = flavors.split(",");
   const known = new Set(FLAVOR_CATEGORIES.map((c) => c.id));
@@ -64,7 +77,12 @@ export function decodeShareQuery(search: string): SharedResult | null {
   ) {
     return null;
   }
-  return { typeId, flavorIds: flavorIds as FlavorCategoryId[] };
+  return {
+    typeId,
+    roast: roast as RoastLevel,
+    process: process as ProcessMethodId,
+    flavorIds: flavorIds as FlavorCategoryId[],
+  };
 }
 
 export function buildShareText(typeName: string): string {

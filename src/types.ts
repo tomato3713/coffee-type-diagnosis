@@ -85,22 +85,55 @@ export interface ProcessMethod {
   description: string;
 }
 
-export interface ResultType {
+export interface RoastChoice {
+  label: string;
+  // 深煎り側の選択肢が持つ重み（2進の桁: 4/2/1）。浅煎り側は 0
+  weight: number;
+}
+
+export interface RoastQuestion {
+  id: string;
+  text: string;
+  choices: [RoastChoice, RoastChoice];
+}
+
+export interface ProcessChoice {
+  label: string;
+  bit: 0 | 1;
+}
+
+export interface ProcessQuestion {
+  id: string;
+  text: string;
+  choices: [ProcessChoice, ProcessChoice];
+}
+
+// 4軸の組み合わせで決まる16タイプの基本情報
+export interface ResultTypeBase {
   id: string;
   name: string;
   variety: string;
   origin: string;
   brewing: string;
+  description: string;
+}
+
+// 診断結果。焙煎度と精製方法はタイプとは独立に回答から判定されるため、
+// タイプ（16）× 焙煎度（8）× 精製方法（7）の全組み合わせが結果になりうる
+export interface ResultType extends ResultTypeBase {
   roast: RoastLevel;
   process: ProcessMethodId;
-  description: string;
 }
 
 export interface HistoryEntry {
   id: string;
   diagnosedAt: string;
   typeId: string;
+  roast: RoastLevel;
+  process: ProcessMethodId;
   flavorIds: FlavorCategoryId[];
   baseAnswers: number[];
   flavorAnswers: number[];
+  roastAnswers: number[];
+  processAnswers: number[];
 }

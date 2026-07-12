@@ -1,4 +1,9 @@
-import { FLAVOR_QUESTIONS, QUESTIONS } from "../data/questions";
+import {
+  FLAVOR_QUESTIONS,
+  PROCESS_QUESTIONS,
+  QUESTIONS,
+  ROAST_QUESTIONS,
+} from "../data/questions";
 import { flavorBranch } from "./diagnose";
 
 export interface QuizProgress {
@@ -13,19 +18,29 @@ const MAX_FLAVOR_QUESTIONS = Math.max(
 );
 
 // 質問画面の進捗バーの value/max を、現在の回答状況から導出する。
-// value は基本質問・深掘り質問を通じて回答済みの総数で、常に単調増加する
-// （回答が進む限りリセットされない）。max は分岐が確定するまでは見積もりを
-// 使い、確定後は実際の質問数に切り替わる
+// value は基本・深掘り・焙煎度・精製方法を通じて回答済みの総数で、常に
+// 単調増加する（回答が進む限りリセットされない）。max は分岐が確定する
+// までは見積もりを使い、確定後は実際の質問数に切り替わる
 export function quizProgress(
   baseAnswers: number[],
   flavorAnswers: number[],
+  roastAnswers: number[],
+  processAnswers: number[],
 ): QuizProgress {
-  const inFlavorStage = baseAnswers.length >= QUESTIONS.length;
-  const flavorMax = inFlavorStage
+  const branchFixed = baseAnswers.length >= QUESTIONS.length;
+  const flavorMax = branchFixed
     ? FLAVOR_QUESTIONS[flavorBranch(baseAnswers)].length
     : MAX_FLAVOR_QUESTIONS;
   return {
-    value: baseAnswers.length + flavorAnswers.length,
-    max: QUESTIONS.length + flavorMax,
+    value:
+      baseAnswers.length +
+      flavorAnswers.length +
+      roastAnswers.length +
+      processAnswers.length,
+    max:
+      QUESTIONS.length +
+      flavorMax +
+      ROAST_QUESTIONS.length +
+      PROCESS_QUESTIONS.length,
   };
 }

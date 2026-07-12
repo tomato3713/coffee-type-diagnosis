@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { findFlavorCategory, RESULT_TYPES } from "../data/results";
+import { composeResultType, findFlavorCategory } from "../data/results";
 import type { SharedResult } from "../logic/share";
 import { ResultCard } from "./ResultCard";
 import { ShareButtons } from "./ShareButtons";
@@ -19,7 +19,7 @@ export function SharedResultScreen({
   onBackToTop,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const type = RESULT_TYPES[result.typeId];
+  const type = composeResultType(result.typeId, result.roast, result.process);
   if (!type) return null;
 
   return (
