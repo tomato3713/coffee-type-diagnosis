@@ -1,3 +1,7 @@
+# pnpm v11 は未承認のビルドスクリプトをエラーにするため明示的に許可する。
+# esbuild の postinstall はプラットフォーム別バイナリの配置のみを行う
+allowBuilds:
+  esbuild: true
 # 古い正規パッケージが trust check（provenance の有無比較）で
 # 誤検知されるため、確認済みのものだけ除外する
 trustPolicyExclude:
