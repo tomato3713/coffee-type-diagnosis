@@ -43,6 +43,21 @@ interface PointerState {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
+// ラベルがエッジと交差しても読めるよう、キャンバス背景色で縁取りする
+const TEXT_HALO = {
+  fill: "var(--color-ink)",
+  stroke: "var(--color-surface)",
+  strokeWidth: 3,
+  strokeLinejoin: "round",
+  paintOrder: "stroke",
+} as const;
+
+// "果実 (Fruity)" のような大分類ラベルを和名と英名に分ける
+function splitLabel(label: string): [string, string] {
+  const m = label.match(/^(.+?)\s+(\(.+\))$/);
+  return m ? [m[1], m[2]] : [label, ""];
+}
+
 const clampScale = (k: number) => clamp(k, MIN_SCALE, MAX_SCALE);
 
 // 画面内の from から画面外の to へ伸びる線分が、画面境界（pad の内側）と
@@ -512,19 +527,44 @@ export function FlavorTreeView({ highlightIds = [] }: Props) {
                     />
                   )}
                   <circle r={node.isLeaf ? 3.5 : 5.5} fill={node.color} />
-                  {node.depth === 0 ? null : (
+                  {node.depth === 0 ? null : node.depth === 1 ? (
+                    // 大分類ラベルは長く、外向きに出すと子のエッジや中分類の
+                    // ラベルと重なるため、根のエッジしかない中心側に
+                    // 和名・英名の2行で表示する（エッジとは平行で重ならない）
+                    <g transform={`rotate(${flipped ? deg - 180 : deg})`}>
+                      <text
+                        x={flipped ? 10 : -10}
+                        y={-17}
+                        textAnchor={flipped ? "start" : "end"}
+                        fontSize={14}
+                        fontWeight={700}
+                        {...TEXT_HALO}
+                      >
+                        {node.icon ? `${node.icon} ` : ""}
+                        {splitLabel(node.label)[0]}
+                      </text>
+                      {splitLabel(node.label)[1] && (
+                        <text
+                          x={flipped ? 10 : -10}
+                          y={-4}
+                          textAnchor={flipped ? "start" : "end"}
+                          fontSize={10}
+                          fontWeight={600}
+                          {...TEXT_HALO}
+                        >
+                          {splitLabel(node.label)[1]}
+                        </text>
+                      )}
+                    </g>
+                  ) : (
                     <text
                       transform={`rotate(${flipped ? deg - 180 : deg})`}
                       x={flipped ? -10 : 10}
                       y={node.isLeaf ? 4 : -7}
                       textAnchor={flipped ? "end" : "start"}
-                      fontSize={node.depth === 1 ? 14 : 12}
-                      fontWeight={
-                        node.depth === 1 || node.highlighted || isSelected
-                          ? 700
-                          : 400
-                      }
-                      fill="var(--color-ink)"
+                      fontSize={12}
+                      fontWeight={node.highlighted || isSelected ? 700 : 400}
+                      {...TEXT_HALO}
                     >
                       {node.icon ? `${node.icon} ` : ""}
                       {node.label}

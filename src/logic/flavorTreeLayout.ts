@@ -29,6 +29,9 @@ export interface FlavorTreeLayout {
 // 階層1つぶんの半径と、最外周のラベル用の余白
 export const LEVEL_RADIUS = 130;
 export const LABEL_SPACE = 170;
+// 大分類のラベルは中心側に表示するため、根と第1階層の間は広めにとり、
+// 隣り合うラベルが中心付近で重ならないようにする
+export const ROOT_GAP = 90;
 
 function countLeaves(node: FlavorTreeNode): number {
   if (!node.children?.length) return 1;
@@ -70,7 +73,7 @@ export function layoutFlavorTree(
       x: 0,
       y: 0,
       angle: 0,
-      radius: depth * LEVEL_RADIUS,
+      radius: depth === 0 ? 0 : depth * LEVEL_RADIUS + ROOT_GAP,
       depth,
       isLeaf: !node.children?.length,
       highlighted: tagged,
@@ -99,7 +102,7 @@ export function layoutFlavorTree(
 
   visit(root, 0, null, root.color ?? "#6f4e37", false);
 
-  const center = maxDepth * LEVEL_RADIUS + LABEL_SPACE;
+  const center = maxDepth * LEVEL_RADIUS + ROOT_GAP + LABEL_SPACE;
   for (const node of nodes) {
     node.x = center + node.radius * Math.cos(node.angle);
     node.y = center + node.radius * Math.sin(node.angle);
