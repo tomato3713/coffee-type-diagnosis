@@ -188,26 +188,36 @@ describe("シェア URL とシェア文言", () => {
     expect(decodeShareQuery(query)).toEqual(sample);
   });
 
-  it("buildShareText はタイプ名とハッシュタグを含む", () => {
-    const text = buildShareText("華やかシングルオリジン型");
+  it("buildShareText はタイプ名とハッシュタグと url を含む", () => {
+    const text = buildShareText(
+      "華やかシングルオリジン型",
+      "https://example.com/?t=a&f=b",
+    );
     expect(text).toContain("「華やかシングルオリジン型」");
     expect(text).toContain("#コーヒータイプ診断");
+    expect(text).toContain("https://example.com/?t=a&f=b");
   });
 
-  it("xIntentUrl は日本語と # を含む text をエンコードして保持する", () => {
-    const text = buildShareText("華やかシングルオリジン型");
-    const url = new URL(xIntentUrl(text, "https://example.com/?t=a&f=b"));
+  it("xIntentUrl は日本語と # と url を含む text をエンコードして保持する", () => {
+    const text = buildShareText(
+      "華やかシングルオリジン型",
+      "https://example.com/?t=a&f=b",
+    );
+    const url = new URL(xIntentUrl(text));
     expect(url.origin + url.pathname).toBe("https://x.com/intent/post");
     expect(url.searchParams.get("text")).toBe(text);
-    expect(url.searchParams.get("url")).toBe("https://example.com/?t=a&f=b");
+    // text に url を含めているため、別途 url パラメータは付けない（二重表示防止）
+    expect(url.searchParams.has("url")).toBe(false);
   });
 
-  it("lineShareUrl はシェア先 URL を保持する", () => {
-    const url = new URL(lineShareUrl("https://example.com/?t=a&f=b,c"));
-    expect(url.origin + url.pathname).toBe(
-      "https://social-plugins.line.me/lineit/share",
+  it("lineShareUrl は text（url を含む）をメッセージ共有 URL scheme に載せる", () => {
+    const text = buildShareText(
+      "華やかシングルオリジン型",
+      "https://example.com/?t=a&f=b,c",
     );
-    expect(url.searchParams.get("url")).toBe("https://example.com/?t=a&f=b,c");
+    const url = new URL(lineShareUrl(text));
+    expect(url.origin + url.pathname).toBe("https://line.me/R/share");
+    expect(url.searchParams.get("text")).toBe(text);
   });
 
   it("mixiShareUrl はシェア先 URL を保持する", () => {

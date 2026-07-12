@@ -81,21 +81,26 @@ export function decodeShareQuery(search: string): SharedResult | null {
   };
 }
 
-export function buildShareText(typeName: string): string {
-  return `私のコーヒータイプは「${typeName}」でした！ #コーヒータイプ診断`;
+// url を含めることで、text だけをコピー・転記されても診断結果に
+// たどり着けるようにする
+export function buildShareText(typeName: string, url: string): string {
+  return `私のコーヒータイプは「${typeName}」でした！ #コーヒータイプ診断 ${url}`;
 }
 
 export function buildShareUrl(baseUrl: string, result: SharedResult): string {
   return `${baseUrl}${buildResultHash(result)}`;
 }
 
-export function xIntentUrl(text: string, url: string): string {
-  const params = new URLSearchParams({ text, url });
+// text に url を含めて渡す（別途 url パラメータを付けると本文中に二重に出る）
+export function xIntentUrl(text: string): string {
+  const params = new URLSearchParams({ text });
   return `https://x.com/intent/post?${params.toString()}`;
 }
 
-export function lineShareUrl(url: string): string {
-  return `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`;
+// LINE it!（social-plugins.line.me）は URL の OGP プレビューのみで
+// 任意のテキストを持てないため、テキストメッセージ共有の URL scheme を使う
+export function lineShareUrl(text: string): string {
+  return `https://line.me/R/share?text=${encodeURIComponent(text)}`;
 }
 
 // 旧 mixi の mixiチェック。mixi2 にはシェア用 URL がないため、

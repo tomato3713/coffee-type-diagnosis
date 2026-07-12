@@ -17,7 +17,6 @@ interface Props {
 }
 
 export function ShareButtons({ type, flavorIds, cardRef }: Props) {
-  const text = buildShareText(type.name);
   const shareUrl = buildShareUrl(
     `${location.origin}${import.meta.env.BASE_URL}`,
     {
@@ -27,6 +26,7 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
       flavorIds,
     },
   );
+  const text = buildShareText(type.name, shareUrl);
 
   // スマホ等のタッチデバイスは OS の共有シートに一本化し、
   // PC では X / LINE / mixi の intent リンクを並べる
@@ -34,19 +34,20 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
     isTouchDevice() && typeof navigator.share === "function";
 
   async function shareViaSheet() {
+    // text に url を含めているため、別途 url を渡すと二重に表示される
     try {
       const files = cardRef.current
         ? [await captureCardPngFile(cardRef.current, type.id)]
         : undefined;
       if (files && navigator.canShare?.({ files })) {
-        await navigator.share({ files, text, url: shareUrl });
+        await navigator.share({ files, text });
       } else {
-        await navigator.share({ text, url: shareUrl });
+        await navigator.share({ text });
       }
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      // 画像生成や transient activation 切れで失敗したら text + url に縮退
-      await navigator.share({ text, url: shareUrl }).catch(() => {});
+      // 画像生成や transient activation 切れで失敗したら text のみに縮退
+      await navigator.share({ text }).catch(() => {});
     }
   }
 
@@ -64,7 +65,7 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
     <div className="share-buttons">
       <a
         className="share-button"
-        href={xIntentUrl(text, shareUrl)}
+        href={xIntentUrl(text)}
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -72,7 +73,7 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
       </a>
       <a
         className="share-button"
-        href={lineShareUrl(shareUrl)}
+        href={lineShareUrl(text)}
         target="_blank"
         rel="noopener noreferrer"
       >
