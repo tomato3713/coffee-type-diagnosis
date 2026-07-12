@@ -14,7 +14,7 @@ export function StartScreen({ history, onStart, onSelect, onShowTree }: Props) {
       <p className="start-emoji">☕</p>
       <h1>コーヒータイプ診断</h1>
       <p className="start-lead">
-        いくつかの質問に答えると、あなた好みのコーヒーの品種・産地・フレーバー・飲み方がわかります。
+        いくつかの質問に答えると、あなた好みのコーヒーの品種・産地・フレーバー・飲み方・焙煎度・精製方法がわかります。
         フレーバーは SCA
         フレーバーホイール（2016年版）のどの部分かでお伝えします。
       </p>
