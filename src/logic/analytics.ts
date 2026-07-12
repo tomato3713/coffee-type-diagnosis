@@ -1,5 +1,6 @@
-// GA4 の測定 ID。GA4 プロパティ作成後にここへ設定する（未設定の間は計測しない）
-export const GA_MEASUREMENT_ID = "";
+// GA4 の測定 ID。ビルド時の環境変数 VITE_GA_MEASUREMENT_ID から読む
+// （GitHub Actions の Variables 等で設定する）。未設定の間は計測しない
+export const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? "";
 
 declare global {
   interface Window {
