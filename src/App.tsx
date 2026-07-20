@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { CuppingResultScreen } from "./components/CuppingResultScreen";
+import { CuppingScreen } from "./components/CuppingScreen";
 import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
@@ -21,15 +23,22 @@ import {
   type SharedResult,
   WHEEL_PATH,
 } from "./logic/share";
+import { loadCuppingHistory, saveCuppingEntry } from "./storage/cuppingHistory";
 import { loadHistory, saveEntry } from "./storage/history";
-import type { HistoryEntry } from "./types";
+import type {
+  CuppingCriterionAnswer,
+  CuppingHistoryEntry,
+  HistoryEntry,
+} from "./types";
 
 type Screen =
   | { name: "start" }
   | { name: "quiz" }
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
-  | { name: "tree"; highlight: SharedResult | null };
+  | { name: "tree"; highlight: SharedResult | null }
+  | { name: "cupping" }
+  | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
 // URL（#/result?t=&f= / #/wheel?t=&f=）から表示すべき画面を導出する。
 // 結果が自分の診断（lastEntry）と一致するなら、保存や日付のある
@@ -82,11 +91,16 @@ function screenPath(screen: Screen): string {
       return "/shared";
     case "tree":
       return "/wheel";
+    case "cupping":
+      return "/cupping";
+    case "cuppingResult":
+      return "/cupping/result";
   }
 }
 
 function App() {
   const [history, setHistory] = useState(loadHistory);
+  const [cuppingHistory, setCuppingHistory] = useState(loadCuppingHistory);
   const lastEntryRef = useRef<HistoryEntry | null>(null);
   const [screen, setScreen] = useState<Screen>(() => screenFromLocation(null));
 
@@ -143,6 +157,28 @@ function App() {
     showResult(entry);
   }
 
+  function startCupping() {
+    replaceHash("");
+    setScreen({ name: "cupping" });
+  }
+
+  function showCuppingResult(entry: CuppingHistoryEntry) {
+    replaceHash("");
+    setScreen({ name: "cuppingResult", entry });
+  }
+
+  // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない
+  function completeCupping(answers: CuppingCriterionAnswer[]) {
+    const entry: CuppingHistoryEntry = {
+      id: crypto.randomUUID(),
+      cuppedAt: new Date().toISOString(),
+      coffeeName: "",
+      answers,
+    };
+    setCuppingHistory(saveCuppingEntry(entry));
+    showCuppingResult(entry);
+  }
+
   // 履歴に積んでツリーページへ。ブラウザの戻るで呼び出し元へ戻れる
   function showTree(highlight: SharedResult | null) {
     window.history.pushState(
@@ -173,6 +209,9 @@ function App() {
           onStart={startQuiz}
           onSelect={showResult}
           onShowTree={() => showTree(null)}
+          cuppingHistory={cuppingHistory}
+          onStartCupping={startCupping}
+          onSelectCupping={showCuppingResult}
         />
       )}
       {screen.name === "quiz" && <QuizScreen onComplete={complete} />}
@@ -197,6 +236,16 @@ function App() {
           highlightIds={screen.highlight?.flavorIds ?? []}
           onBack={backFromTree}
           backLabel={screen.highlight ? "診断結果に戻る" : "トップへ"}
+        />
+      )}
+      {screen.name === "cupping" && (
+        <CuppingScreen onComplete={completeCupping} />
+      )}
+      {screen.name === "cuppingResult" && (
+        <CuppingResultScreen
+          entry={screen.entry}
+          onRestart={startCupping}
+          onBackToTop={backToTop}
         />
       )}
     </main>

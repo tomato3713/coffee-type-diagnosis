@@ -1,14 +1,25 @@
 import { RESULT_TYPES } from "../data/results";
-import type { HistoryEntry } from "../types";
+import type { CuppingHistoryEntry, HistoryEntry } from "../types";
 
 interface Props {
   history: HistoryEntry[];
   onStart: () => void;
   onSelect: (entry: HistoryEntry) => void;
   onShowTree: () => void;
+  cuppingHistory: CuppingHistoryEntry[];
+  onStartCupping: () => void;
+  onSelectCupping: (entry: CuppingHistoryEntry) => void;
 }
 
-export function StartScreen({ history, onStart, onSelect, onShowTree }: Props) {
+export function StartScreen({
+  history,
+  onStart,
+  onSelect,
+  onShowTree,
+  cuppingHistory,
+  onStartCupping,
+  onSelectCupping,
+}: Props) {
   return (
     <div className="start">
       <p className="start-emoji">☕</p>
@@ -40,6 +51,44 @@ export function StartScreen({ history, onStart, onSelect, onShowTree }: Props) {
                   </span>
                   <time dateTime={entry.diagnosedAt}>
                     {new Date(entry.diagnosedAt).toLocaleDateString("ja-JP")}
+                  </time>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="cupping-intro">
+        <h2>カッピングでフレーバーを掘り下げる</h2>
+        <p className="start-lead">
+          Cup of Excellence
+          カッピングフォームの8項目ごとに、誘導質問・語彙タグ・自由記述で味を評価しながら、コーヒーの表現力を磨けます。
+        </p>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onStartCupping}
+        >
+          カッピングをはじめる
+        </button>
+      </section>
+      {cuppingHistory.length > 0 && (
+        <section className="history">
+          <h2>カッピング履歴</h2>
+          <ul>
+            {cuppingHistory.map((entry) => (
+              <li key={entry.id}>
+                <button
+                  type="button"
+                  className="history-item"
+                  onClick={() => onSelectCupping(entry)}
+                >
+                  <span className="history-name">
+                    {entry.coffeeName || "名前未記入のコーヒー"}
+                  </span>
+                  <time dateTime={entry.cuppedAt}>
+                    {new Date(entry.cuppedAt).toLocaleDateString("ja-JP")}
                   </time>
                 </button>
               </li>
