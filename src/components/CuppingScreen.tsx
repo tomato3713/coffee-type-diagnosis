@@ -47,6 +47,8 @@ export function CuppingScreen({
   const draft = drafts[cursor];
   const progress = cuppingProgress(Math.min(answeredCount, cursor));
   const isLast = cursor === CUPPING_CRITERION_COUNT - 1;
+  // 編集時は全項目のスコアが既に確定しているため、途中からでも結果に戻れる
+  const isEditing = initialAnswers !== undefined;
 
   function updateDraft(patch: Partial<Draft>) {
     setDrafts((prev) =>
@@ -61,18 +63,22 @@ export function CuppingScreen({
     updateDraft({ tags });
   }
 
+  function finish() {
+    onComplete(
+      drafts.map((d, i) => ({
+        criterionId: CUPPING_CRITERIA[i].id,
+        // biome-ignore lint/style/noNonNullAssertion: 呼び出し元で全項目のスコア確定を保証している
+        score: d.score!,
+        tags: d.tags,
+        note: d.note,
+      })),
+    );
+  }
+
   function next() {
     if (draft.score === null) return;
     if (isLast) {
-      onComplete(
-        drafts.map((d, i) => ({
-          criterionId: CUPPING_CRITERIA[i].id,
-          // biome-ignore lint/style/noNonNullAssertion: isLast到達時は全項目のスコアが確定している
-          score: d.score!,
-          tags: d.tags,
-          note: d.note,
-        })),
-      );
+      finish();
       return;
     }
     setCursor(cursor + 1);
@@ -155,14 +161,21 @@ export function CuppingScreen({
         >
           ← 前の項目
         </button>
-        <button
-          type="button"
-          className="primary-button"
-          onClick={next}
-          disabled={draft.score === null}
-        >
-          {isLast ? "結果を見る" : "次の項目 →"}
-        </button>
+        <div className="cupping-nav-right">
+          {isEditing && !isLast && (
+            <button type="button" className="secondary-button" onClick={finish}>
+              保存して結果に戻る
+            </button>
+          )}
+          <button
+            type="button"
+            className="primary-button"
+            onClick={next}
+            disabled={draft.score === null}
+          >
+            {isLast ? "結果を見る" : "次の項目 →"}
+          </button>
+        </div>
       </div>
     </div>
   );

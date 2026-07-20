@@ -772,8 +772,16 @@ button {
   opacity: 0.5;
 }
 
-.cupping-nav .primary-button {
+.cupping-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cupping-nav .primary-button,
+.cupping-nav .secondary-button {
   width: auto;
+  padding: 10px 14px;
 }
 
 /* カッピング結果画面 */
