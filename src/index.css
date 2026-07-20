@@ -823,23 +823,31 @@ button {
   color: var(--color-accent);
 }
 
-.cupping-card-criterion {
-  padding: 12px 0;
-  border-top: 1px dashed var(--color-line);
+.cupping-card-criteria {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.cupping-card-criterion:first-child {
-  border-top: none;
+.cupping-card-criterion {
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-bg);
 }
 
 .cupping-card-criterion-label {
   margin: 0;
-  display: flex;
-  justify-content: space-between;
   font-weight: 700;
 }
 
+.cupping-card-criterion-note {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
 .cupping-card-criterion-score {
+  margin: 4px 0 0;
   color: var(--color-accent);
   font-weight: 700;
 }
@@ -848,11 +856,6 @@ button {
   margin: 4px 0 0;
   font-size: 0.85rem;
   color: var(--color-muted);
-}
-
-.cupping-card-criterion-note {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
 }
 
 .cupping-card-footer {

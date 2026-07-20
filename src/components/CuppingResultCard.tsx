@@ -32,19 +32,17 @@ export function CuppingResultCard({ entry, ref }: Props) {
           const answer = entry.answers[i];
           return (
             <div className="cupping-card-criterion" key={criterion.id}>
-              <p className="cupping-card-criterion-label">
-                {criterion.label}
-                <span className="cupping-card-criterion-score">
-                  {answer.score} / 10
-                </span>
+              <p className="cupping-card-criterion-label">{criterion.label}</p>
+              {answer.note && (
+                <p className="cupping-card-criterion-note">{answer.note}</p>
+              )}
+              <p className="cupping-card-criterion-score">
+                {answer.score} / 10
               </p>
               {answer.tags.length > 0 && (
                 <p className="cupping-card-criterion-tags">
                   {answer.tags.join("・")}
                 </p>
-              )}
-              {answer.note && (
-                <p className="cupping-card-criterion-note">{answer.note}</p>
               )}
             </div>
           );
