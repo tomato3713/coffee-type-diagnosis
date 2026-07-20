@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { CuppingResultScreen } from "./components/CuppingResultScreen";
+import { CuppingScreen } from "./components/CuppingScreen";
 import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
@@ -13,23 +15,40 @@ import {
   flavorBranch,
 } from "./logic/diagnose";
 import {
+  buildCuppingEditHash,
+  buildCuppingResultHash,
   buildResultHash,
   buildWheelHash,
+  CUPPING_EDIT_PATH,
+  CUPPING_RESULT_PATH,
+  decodeCuppingEditQuery,
+  decodeCuppingResultId,
   decodeShareQuery,
   parseHashRoute,
   RESULT_PATH,
   type SharedResult,
   WHEEL_PATH,
 } from "./logic/share";
+import { loadCuppingHistory, saveCuppingEntry } from "./storage/cuppingHistory";
 import { loadHistory, saveEntry } from "./storage/history";
-import type { HistoryEntry } from "./types";
+import type {
+  CuppingCriterionAnswer,
+  CuppingHistoryEntry,
+  HistoryEntry,
+} from "./types";
 
 type Screen =
   | { name: "start" }
   | { name: "quiz" }
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
-  | { name: "tree"; highlight: SharedResult | null };
+  | { name: "tree"; highlight: SharedResult | null }
+  | {
+      name: "cupping";
+      // 結果画面から項目を編集し直す場合に渡す
+      editing?: { entry: CuppingHistoryEntry; startIndex: number };
+    }
+  | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
 // URL（#/result?t=&f= / #/wheel?t=&f=）から表示すべき画面を導出する。
 // 結果が自分の診断（lastEntry）と一致するなら、保存や日付のある
@@ -51,6 +70,22 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
       return { name: "result", entry: lastEntry };
     }
     return { name: "shared", result: shared };
+  }
+  if (path === CUPPING_RESULT_PATH) {
+    const id = decodeCuppingResultId(query);
+    const entry = id
+      ? loadCuppingHistory().find((e) => e.id === id)
+      : undefined;
+    if (entry) return { name: "cuppingResult", entry };
+  }
+  if (path === CUPPING_EDIT_PATH) {
+    const target = decodeCuppingEditQuery(query);
+    const entry = target
+      ? loadCuppingHistory().find((e) => e.id === target.id)
+      : undefined;
+    if (entry && target) {
+      return { name: "cupping", editing: { entry, startIndex: target.index } };
+    }
   }
   return { name: "start" };
 }
@@ -82,11 +117,16 @@ function screenPath(screen: Screen): string {
       return "/shared";
     case "tree":
       return "/wheel";
+    case "cupping":
+      return "/cupping";
+    case "cuppingResult":
+      return "/cupping/result";
   }
 }
 
 function App() {
   const [history, setHistory] = useState(loadHistory);
+  const [cuppingHistory, setCuppingHistory] = useState(loadCuppingHistory);
   const lastEntryRef = useRef<HistoryEntry | null>(null);
   const [screen, setScreen] = useState<Screen>(() => screenFromLocation(null));
 
@@ -143,6 +183,46 @@ function App() {
     showResult(entry);
   }
 
+  function startCupping() {
+    replaceHash("");
+    setScreen({ name: "cupping" });
+  }
+
+  // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
+  function showCuppingResult(entry: CuppingHistoryEntry) {
+    window.history.pushState(
+      null,
+      "",
+      `${location.pathname}${buildCuppingResultHash(entry.id)}`,
+    );
+    setScreen({ name: "cuppingResult", entry });
+  }
+
+  // 結果画面で項目をクリックしたときに、その項目からやり直せるようにする。
+  // どの結果を編集中かをURLに残す
+  function editCuppingCriterion(entry: CuppingHistoryEntry, index: number) {
+    replaceHash(buildCuppingEditHash(entry.id, index));
+    setScreen({ name: "cupping", editing: { entry, startIndex: index } });
+  }
+
+  // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない。
+  // editingEntry がある場合は新規作成ではなく既存エントリの更新になる
+  function completeCupping(
+    answers: CuppingCriterionAnswer[],
+    editingEntry: CuppingHistoryEntry | null,
+  ) {
+    const entry: CuppingHistoryEntry = editingEntry
+      ? { ...editingEntry, answers }
+      : {
+          id: crypto.randomUUID(),
+          cuppedAt: new Date().toISOString(),
+          coffeeName: "",
+          answers,
+        };
+    setCuppingHistory(saveCuppingEntry(entry));
+    showCuppingResult(entry);
+  }
+
   // 履歴に積んでツリーページへ。ブラウザの戻るで呼び出し元へ戻れる
   function showTree(highlight: SharedResult | null) {
     window.history.pushState(
@@ -173,6 +253,9 @@ function App() {
           onStart={startQuiz}
           onSelect={showResult}
           onShowTree={() => showTree(null)}
+          cuppingHistory={cuppingHistory}
+          onStartCupping={startCupping}
+          onSelectCupping={showCuppingResult}
         />
       )}
       {screen.name === "quiz" && <QuizScreen onComplete={complete} />}
@@ -197,6 +280,23 @@ function App() {
           highlightIds={screen.highlight?.flavorIds ?? []}
           onBack={backFromTree}
           backLabel={screen.highlight ? "診断結果に戻る" : "トップへ"}
+        />
+      )}
+      {screen.name === "cupping" && (
+        <CuppingScreen
+          onComplete={(answers) =>
+            completeCupping(answers, screen.editing?.entry ?? null)
+          }
+          initialAnswers={screen.editing?.entry.answers}
+          initialCursor={screen.editing?.startIndex}
+        />
+      )}
+      {screen.name === "cuppingResult" && (
+        <CuppingResultScreen
+          entry={screen.entry}
+          onRestart={startCupping}
+          onBackToTop={backToTop}
+          onEditCriterion={(index) => editCuppingCriterion(screen.entry, index)}
         />
       )}
     </main>

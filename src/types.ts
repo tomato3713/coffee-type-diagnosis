@@ -137,3 +137,34 @@ export interface HistoryEntry {
   roastAnswers: number[];
   processAnswers: number[];
 }
+
+// Cup of Excellence カッピングフォームの8項目
+export type CuppingCriterionId =
+  | "clean-cup"
+  | "sweetness"
+  | "acidity"
+  | "mouthfeel"
+  | "flavor"
+  | "aftertaste"
+  | "balance"
+  | "overall";
+
+// 各項目の採点は1〜10の整数
+export type CuppingScore = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+export interface CuppingCriterionAnswer {
+  criterionId: CuppingCriterionId;
+  score: CuppingScore;
+  // flavor/aftertaste は FLAVOR_CATEGORIES の label、他項目は語彙データの単語
+  tags: string[];
+  note: string;
+}
+
+export interface CuppingHistoryEntry {
+  id: string;
+  cuppedAt: string;
+  // 対象コーヒーの名前。任意入力なので空文字を許容する
+  coffeeName: string;
+  // 常に8件、CUPPING_CRITERIA と同順で持つ
+  answers: CuppingCriterionAnswer[];
+}

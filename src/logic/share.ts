@@ -1,3 +1,4 @@
+import { CUPPING_CRITERIA } from "../data/cupping";
 import { MAX_FLAVOR_QUESTION_COUNT } from "../data/questions";
 import {
   FLAVOR_CATEGORIES,
@@ -19,6 +20,8 @@ export interface SharedResult {
 // 直接アクセスが 404 にならない
 export const RESULT_PATH = "/result";
 export const WHEEL_PATH = "/wheel";
+export const CUPPING_RESULT_PATH = "/cupping/result";
+export const CUPPING_EDIT_PATH = "/cupping/edit";
 
 // location.hash（先頭 # あり/なし両対応）を { path, query } に分解する
 export function parseHashRoute(hash: string): { path: string; query: string } {
@@ -37,6 +40,46 @@ export function buildWheelHash(result: SharedResult | null): string {
   return result
     ? `#${WHEEL_PATH}?${encodeShareQuery(result)}`
     : `#${WHEEL_PATH}`;
+}
+
+// カッピング結果は他人との共有を想定しないため、状態そのものではなく
+// この端末の履歴を引くための id だけをクエリに載せる
+export function buildCuppingResultHash(entryId: string): string {
+  const params = new URLSearchParams({ id: entryId });
+  return `#${CUPPING_RESULT_PATH}?${params.toString()}`;
+}
+
+export function decodeCuppingResultId(search: string): string | null {
+  return new URLSearchParams(search).get("id");
+}
+
+export interface CuppingEditTarget {
+  id: string;
+  index: number;
+}
+
+// 再入力（編集）中も、どのエントリのどの項目からやり直しているかを
+// URL から復元できるようにする
+export function buildCuppingEditHash(entryId: string, index: number): string {
+  const params = new URLSearchParams({ id: entryId, i: String(index) });
+  return `#${CUPPING_EDIT_PATH}?${params.toString()}`;
+}
+
+export function decodeCuppingEditQuery(
+  search: string,
+): CuppingEditTarget | null {
+  const params = new URLSearchParams(search);
+  const id = params.get("id");
+  const index = Number(params.get("i"));
+  if (
+    !id ||
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= CUPPING_CRITERIA.length
+  ) {
+    return null;
+  }
+  return { id, index };
 }
 
 // 例: "t=acid-light-fruity-straight&r=2&p=washed&f=floral,berry"（先頭 ? なし）

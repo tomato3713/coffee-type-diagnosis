@@ -7,10 +7,16 @@ import {
   ROAST_LEVELS,
 } from "../data/results";
 import {
+  buildCuppingEditHash,
+  buildCuppingResultHash,
   buildResultHash,
   buildShareText,
   buildShareUrl,
   buildWheelHash,
+  CUPPING_EDIT_PATH,
+  CUPPING_RESULT_PATH,
+  decodeCuppingEditQuery,
+  decodeCuppingResultId,
   decodeShareQuery,
   encodeShareQuery,
   lineShareUrl,
@@ -177,6 +183,36 @@ describe("buildResultHash / buildWheelHash", () => {
 
   it("buildWheelHash は null を渡すとクエリなしの /wheel になる", () => {
     expect(buildWheelHash(null)).toBe(`#${WHEEL_PATH}`);
+  });
+});
+
+describe("buildCuppingResultHash / decodeCuppingResultId", () => {
+  it("エントリ id を /cupping/result パスのクエリに載せる", () => {
+    const { path, query } = parseHashRoute(buildCuppingResultHash("entry-1"));
+    expect(path).toBe(CUPPING_RESULT_PATH);
+    expect(decodeCuppingResultId(query)).toBe("entry-1");
+  });
+
+  it("id パラメータがなければ null になる", () => {
+    expect(decodeCuppingResultId("")).toBeNull();
+  });
+});
+
+describe("buildCuppingEditHash / decodeCuppingEditQuery", () => {
+  it("エントリ id と項目インデックスを /cupping/edit パスのクエリに載せる", () => {
+    const { path, query } = parseHashRoute(buildCuppingEditHash("entry-1", 3));
+    expect(path).toBe(CUPPING_EDIT_PATH);
+    expect(decodeCuppingEditQuery(query)).toEqual({ id: "entry-1", index: 3 });
+  });
+
+  it("id が欠落していると null になる", () => {
+    expect(decodeCuppingEditQuery("i=3")).toBeNull();
+  });
+
+  it("インデックスが範囲外だと null になる", () => {
+    expect(decodeCuppingEditQuery("id=entry-1&i=-1")).toBeNull();
+    expect(decodeCuppingEditQuery("id=entry-1&i=8")).toBeNull();
+    expect(decodeCuppingEditQuery("id=entry-1&i=abc")).toBeNull();
   });
 });
 

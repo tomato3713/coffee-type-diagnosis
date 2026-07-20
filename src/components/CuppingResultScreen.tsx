@@ -1,28 +1,24 @@
 import { useRef, useState } from "react";
-import { composeResultType, findFlavorCategory } from "../data/results";
 import { isTouchDevice } from "../logic/device";
-import type { HistoryEntry } from "../types";
+import type { CuppingHistoryEntry } from "../types";
+import { CuppingResultCard } from "./CuppingResultCard";
 import { captureCardPngFile } from "./cardCapture";
-import { ResultCard } from "./ResultCard";
-import { ShareButtons } from "./ShareButtons";
 
 interface Props {
-  entry: HistoryEntry;
+  entry: CuppingHistoryEntry;
   onRestart: () => void;
   onBackToTop: () => void;
-  onShowTree: () => void;
+  onEditCriterion: (index: number) => void;
 }
 
-export function ResultScreen({
+export function CuppingResultScreen({
   entry,
   onRestart,
   onBackToTop,
-  onShowTree,
+  onEditCriterion,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
-  const type = composeResultType(entry.typeId, entry.roast, entry.process);
-  if (!type) return null;
 
   async function download() {
     if (!cardRef.current) return;
@@ -30,7 +26,7 @@ export function ResultScreen({
     try {
       const file = await captureCardPngFile(
         cardRef.current,
-        `coffee-type-${entry.typeId}.png`,
+        `coffee-cupping-${entry.id}.png`,
       );
       // スマホの <a download> は「ファイル」アプリ行きになるため、
       // 共有シートを開いて「画像を保存」で写真アプリに保存できるようにする
@@ -55,15 +51,13 @@ export function ResultScreen({
   }
 
   return (
-    <div className="result">
-      <ResultCard
+    <div className="cupping-result">
+      <CuppingResultCard
         ref={cardRef}
-        type={type}
-        flavors={entry.flavorIds.map(findFlavorCategory)}
-        diagnosedAt={entry.diagnosedAt}
+        entry={entry}
+        onSelectCriterion={onEditCriterion}
       />
-      <ShareButtons type={type} flavorIds={entry.flavorIds} cardRef={cardRef} />
-      <div className="result-actions">
+      <div className="cupping-result-actions">
         <button
           type="button"
           className="primary-button"
@@ -72,11 +66,8 @@ export function ResultScreen({
         >
           {saving ? "保存中…" : "画像として保存"}
         </button>
-        <button type="button" className="secondary-button" onClick={onShowTree}>
-          フレーバーツリーで確認する
-        </button>
         <button type="button" className="secondary-button" onClick={onRestart}>
-          もう一度診断する
+          もう一度カッピングする
         </button>
         <button type="button" className="text-button" onClick={onBackToTop}>
           トップへ戻る

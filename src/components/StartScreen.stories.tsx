@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { HistoryEntry } from "../types";
+import type { CuppingHistoryEntry, HistoryEntry } from "../types";
 import { StartScreen } from "./StartScreen";
 
 const meta = {
@@ -37,12 +37,24 @@ const historyEntries: HistoryEntry[] = [
   },
 ];
 
+const cuppingHistoryEntries: CuppingHistoryEntry[] = [
+  {
+    id: "cupping-1",
+    cuppedAt: "2026-07-11T09:00:00.000Z",
+    coffeeName: "エチオピア イルガチェフェ",
+    answers: [],
+  },
+];
+
 export const 初回訪問: Story = {
   args: {
     history: [],
     onStart: () => {},
     onSelect: () => {},
     onShowTree: () => {},
+    cuppingHistory: [],
+    onStartCupping: () => {},
+    onSelectCupping: () => {},
   },
 };
 
@@ -50,5 +62,6 @@ export const 履歴あり: Story = {
   args: {
     ...初回訪問.args,
     history: historyEntries,
+    cuppingHistory: cuppingHistoryEntries,
   },
 };

@@ -597,3 +597,313 @@ button {
   line-height: 1.5;
   color: var(--color-muted);
 }
+
+/* スタート画面のカッピング導線 */
+.cupping-intro {
+  margin-top: 48px;
+  text-align: left;
+}
+
+.cupping-intro h2 {
+  font-size: 1rem;
+  color: var(--color-muted);
+}
+
+/* カッピング入力画面 */
+.cupping-stage {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.cupping-progress {
+  width: 100%;
+  height: 6px;
+  appearance: none;
+}
+
+.cupping-progress::-webkit-progress-bar {
+  background: var(--color-line);
+  border-radius: 3px;
+}
+
+.cupping-progress::-webkit-progress-value {
+  background: var(--color-accent);
+  border-radius: 3px;
+}
+
+.cupping-progress::-moz-progress-bar {
+  background: var(--color-accent);
+  border-radius: 3px;
+}
+
+.cupping-map {
+  margin-top: 16px;
+  display: flex;
+  gap: 6px;
+}
+
+.cupping-map-dot {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.cupping-map-dot.is-answered {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.cupping-map-dot.is-current {
+  border-color: var(--color-accent-dark);
+  background: var(--color-bg);
+  outline: 2px solid var(--color-accent-dark);
+  outline-offset: 1px;
+}
+
+.cupping-map-dot:disabled {
+  opacity: 0.45;
+}
+
+.cupping-criterion-label {
+  margin: 32px 0 4px;
+}
+
+.cupping-criterion-description {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.cupping-question {
+  margin: 16px 0;
+  font-weight: 700;
+}
+
+.cupping-score {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.cupping-score-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cupping-score-button:hover {
+  border-color: var(--color-accent);
+}
+
+.cupping-score-button.is-selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.cupping-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.cupping-tag {
+  padding: 8px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.cupping-tag:hover {
+  border-color: var(--color-accent);
+}
+
+.cupping-tag.is-selected {
+  border-color: var(--color-accent);
+  background: var(--color-bg);
+  font-weight: 700;
+  color: var(--color-accent-dark);
+}
+
+.cupping-note {
+  width: 100%;
+  min-height: 5em;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.cupping-nav {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.cupping-nav-button {
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+}
+
+.cupping-nav-button:disabled {
+  color: var(--color-muted);
+  opacity: 0.5;
+}
+
+.cupping-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cupping-nav .primary-button,
+.cupping-nav .secondary-button {
+  width: auto;
+  padding: 10px 14px;
+}
+
+/* カッピング結果画面 */
+.cupping-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.cupping-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 28px 24px;
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  background: var(--color-surface);
+}
+
+.cupping-card-heading {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.cupping-card-name {
+  margin: 4px 0 16px;
+  color: var(--color-accent-dark);
+  font-size: 1.5rem;
+}
+
+.cupping-card-summary-text {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+}
+
+.cupping-card-summary {
+  margin: 0 0 20px;
+  display: flex;
+  gap: 24px;
+}
+
+.cupping-card-summary dt {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.cupping-card-summary dd {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.cupping-card-criteria {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cupping-card-criterion {
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-bg);
+}
+
+/* 結果画面での再編集用ボタン版。見た目は div 版と揃える */
+.cupping-card-criterion-button {
+  display: block;
+  width: 100%;
+  color: inherit;
+  text-align: left;
+}
+
+.cupping-card-criterion-button:hover {
+  border-color: var(--color-accent);
+}
+
+.cupping-card-criterion-label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.cupping-card-criterion-note {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
+
+.cupping-card-criterion-score {
+  margin: 4px 0 0;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.cupping-card-criterion-tags {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.cupping-card-footer {
+  margin-top: 20px;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.cupping-card-footer-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cupping-card-url {
+  margin: 4px 0 0;
+  font-size: 0.7rem;
+  word-break: break-all;
+}
+
+.cupping-result-actions {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

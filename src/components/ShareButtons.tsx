@@ -37,7 +37,12 @@ export function ShareButtons({ type, flavorIds, cardRef }: Props) {
     // text に url を含めているため、別途 url を渡すと二重に表示される
     try {
       const files = cardRef.current
-        ? [await captureCardPngFile(cardRef.current, type.id)]
+        ? [
+            await captureCardPngFile(
+              cardRef.current,
+              `coffee-type-${type.id}.png`,
+            ),
+          ]
         : undefined;
       if (files && navigator.canShare?.({ files })) {
         await navigator.share({ files, text });
