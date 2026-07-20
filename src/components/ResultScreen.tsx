@@ -28,7 +28,10 @@ export function ResultScreen({
     if (!cardRef.current) return;
     setSaving(true);
     try {
-      const file = await captureCardPngFile(cardRef.current, entry.typeId);
+      const file = await captureCardPngFile(
+        cardRef.current,
+        `coffee-type-${entry.typeId}.png`,
+      );
       // スマホの <a download> は「ファイル」アプリ行きになるため、
       // 共有シートを開いて「画像を保存」で写真アプリに保存できるようにする
       if (isTouchDevice() && navigator.canShare?.({ files: [file] })) {
