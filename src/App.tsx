@@ -15,10 +15,13 @@ import {
   flavorBranch,
 } from "./logic/diagnose";
 import {
+  buildCuppingEditHash,
   buildCuppingResultHash,
   buildResultHash,
   buildWheelHash,
+  CUPPING_EDIT_PATH,
   CUPPING_RESULT_PATH,
+  decodeCuppingEditQuery,
   decodeCuppingResultId,
   decodeShareQuery,
   parseHashRoute,
@@ -74,6 +77,15 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
       ? loadCuppingHistory().find((e) => e.id === id)
       : undefined;
     if (entry) return { name: "cuppingResult", entry };
+  }
+  if (path === CUPPING_EDIT_PATH) {
+    const target = decodeCuppingEditQuery(query);
+    const entry = target
+      ? loadCuppingHistory().find((e) => e.id === target.id)
+      : undefined;
+    if (entry && target) {
+      return { name: "cupping", editing: { entry, startIndex: target.index } };
+    }
   }
   return { name: "start" };
 }
@@ -176,14 +188,20 @@ function App() {
     setScreen({ name: "cupping" });
   }
 
+  // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
   function showCuppingResult(entry: CuppingHistoryEntry) {
-    replaceHash(buildCuppingResultHash(entry.id));
+    window.history.pushState(
+      null,
+      "",
+      `${location.pathname}${buildCuppingResultHash(entry.id)}`,
+    );
     setScreen({ name: "cuppingResult", entry });
   }
 
-  // 結果画面で項目をクリックしたときに、その項目からやり直せるようにする
+  // 結果画面で項目をクリックしたときに、その項目からやり直せるようにする。
+  // どの結果を編集中かをURLに残す
   function editCuppingCriterion(entry: CuppingHistoryEntry, index: number) {
-    replaceHash("");
+    replaceHash(buildCuppingEditHash(entry.id, index));
     setScreen({ name: "cupping", editing: { entry, startIndex: index } });
   }
 

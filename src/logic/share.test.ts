@@ -7,12 +7,15 @@ import {
   ROAST_LEVELS,
 } from "../data/results";
 import {
+  buildCuppingEditHash,
   buildCuppingResultHash,
   buildResultHash,
   buildShareText,
   buildShareUrl,
   buildWheelHash,
+  CUPPING_EDIT_PATH,
   CUPPING_RESULT_PATH,
+  decodeCuppingEditQuery,
   decodeCuppingResultId,
   decodeShareQuery,
   encodeShareQuery,
@@ -192,6 +195,24 @@ describe("buildCuppingResultHash / decodeCuppingResultId", () => {
 
   it("id パラメータがなければ null になる", () => {
     expect(decodeCuppingResultId("")).toBeNull();
+  });
+});
+
+describe("buildCuppingEditHash / decodeCuppingEditQuery", () => {
+  it("エントリ id と項目インデックスを /cupping/edit パスのクエリに載せる", () => {
+    const { path, query } = parseHashRoute(buildCuppingEditHash("entry-1", 3));
+    expect(path).toBe(CUPPING_EDIT_PATH);
+    expect(decodeCuppingEditQuery(query)).toEqual({ id: "entry-1", index: 3 });
+  });
+
+  it("id が欠落していると null になる", () => {
+    expect(decodeCuppingEditQuery("i=3")).toBeNull();
+  });
+
+  it("インデックスが範囲外だと null になる", () => {
+    expect(decodeCuppingEditQuery("id=entry-1&i=-1")).toBeNull();
+    expect(decodeCuppingEditQuery("id=entry-1&i=8")).toBeNull();
+    expect(decodeCuppingEditQuery("id=entry-1&i=abc")).toBeNull();
   });
 });
 
