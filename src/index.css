@@ -805,6 +805,11 @@ button {
   font-size: 1.5rem;
 }
 
+.cupping-card-summary-text {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+}
+
 .cupping-card-summary {
   margin: 0 0 20px;
   display: flex;
@@ -834,6 +839,18 @@ button {
   border: 1px solid var(--color-line);
   border-radius: 10px;
   background: var(--color-bg);
+}
+
+/* 結果画面での再編集用ボタン版。見た目は div 版と揃える */
+.cupping-card-criterion-button {
+  display: block;
+  width: 100%;
+  color: inherit;
+  text-align: left;
+}
+
+.cupping-card-criterion-button:hover {
+  border-color: var(--color-accent);
 }
 
 .cupping-card-criterion-label {

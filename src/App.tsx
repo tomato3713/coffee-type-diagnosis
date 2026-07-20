@@ -15,8 +15,11 @@ import {
   flavorBranch,
 } from "./logic/diagnose";
 import {
+  buildCuppingResultHash,
   buildResultHash,
   buildWheelHash,
+  CUPPING_RESULT_PATH,
+  decodeCuppingResultId,
   decodeShareQuery,
   parseHashRoute,
   RESULT_PATH,
@@ -37,7 +40,11 @@ type Screen =
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
-  | { name: "cupping" }
+  | {
+      name: "cupping";
+      // 結果画面から項目を編集し直す場合に渡す
+      editing?: { entry: CuppingHistoryEntry; startIndex: number };
+    }
   | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
 // URL（#/result?t=&f= / #/wheel?t=&f=）から表示すべき画面を導出する。
@@ -60,6 +67,13 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
       return { name: "result", entry: lastEntry };
     }
     return { name: "shared", result: shared };
+  }
+  if (path === CUPPING_RESULT_PATH) {
+    const id = decodeCuppingResultId(query);
+    const entry = id
+      ? loadCuppingHistory().find((e) => e.id === id)
+      : undefined;
+    if (entry) return { name: "cuppingResult", entry };
   }
   return { name: "start" };
 }
@@ -163,18 +177,30 @@ function App() {
   }
 
   function showCuppingResult(entry: CuppingHistoryEntry) {
-    replaceHash("");
+    replaceHash(buildCuppingResultHash(entry.id));
     setScreen({ name: "cuppingResult", entry });
   }
 
-  // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない
-  function completeCupping(answers: CuppingCriterionAnswer[]) {
-    const entry: CuppingHistoryEntry = {
-      id: crypto.randomUUID(),
-      cuppedAt: new Date().toISOString(),
-      coffeeName: "",
-      answers,
-    };
+  // 結果画面で項目をクリックしたときに、その項目からやり直せるようにする
+  function editCuppingCriterion(entry: CuppingHistoryEntry, index: number) {
+    replaceHash("");
+    setScreen({ name: "cupping", editing: { entry, startIndex: index } });
+  }
+
+  // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない。
+  // editingEntry がある場合は新規作成ではなく既存エントリの更新になる
+  function completeCupping(
+    answers: CuppingCriterionAnswer[],
+    editingEntry: CuppingHistoryEntry | null,
+  ) {
+    const entry: CuppingHistoryEntry = editingEntry
+      ? { ...editingEntry, answers }
+      : {
+          id: crypto.randomUUID(),
+          cuppedAt: new Date().toISOString(),
+          coffeeName: "",
+          answers,
+        };
     setCuppingHistory(saveCuppingEntry(entry));
     showCuppingResult(entry);
   }
@@ -239,13 +265,20 @@ function App() {
         />
       )}
       {screen.name === "cupping" && (
-        <CuppingScreen onComplete={completeCupping} />
+        <CuppingScreen
+          onComplete={(answers) =>
+            completeCupping(answers, screen.editing?.entry ?? null)
+          }
+          initialAnswers={screen.editing?.entry.answers}
+          initialCursor={screen.editing?.startIndex}
+        />
       )}
       {screen.name === "cuppingResult" && (
         <CuppingResultScreen
           entry={screen.entry}
           onRestart={startCupping}
           onBackToTop={backToTop}
+          onEditCriterion={(index) => editCuppingCriterion(screen.entry, index)}
         />
       )}
     </main>

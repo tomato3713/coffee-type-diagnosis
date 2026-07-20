@@ -86,6 +86,16 @@ describe("loadCuppingHistory / saveCuppingEntry", () => {
     expect(loadCuppingHistory().map((e) => e.id)).toEqual([known.id]);
   });
 
+  it("同じ id で保存すると重複せず先頭のエントリが更新される", () => {
+    const original = createEntry({ coffeeName: "コロンビア ウイラ" });
+    saveCuppingEntry(original);
+    const updated = { ...original, coffeeName: "コロンビア ウイラ（再評価）" };
+    saveCuppingEntry(updated);
+    const entries = loadCuppingHistory();
+    expect(entries.map((e) => e.id)).toEqual([original.id]);
+    expect(entries[0].coffeeName).toBe("コロンビア ウイラ（再評価）");
+  });
+
   it("50件を超えると古いエントリから落ちる", () => {
     for (let i = 0; i < 55; i++)
       saveCuppingEntry(createEntry({ id: `entry-${i}` }));

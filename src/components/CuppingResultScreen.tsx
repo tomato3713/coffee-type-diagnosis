@@ -8,9 +8,15 @@ interface Props {
   entry: CuppingHistoryEntry;
   onRestart: () => void;
   onBackToTop: () => void;
+  onEditCriterion: (index: number) => void;
 }
 
-export function CuppingResultScreen({ entry, onRestart, onBackToTop }: Props) {
+export function CuppingResultScreen({
+  entry,
+  onRestart,
+  onBackToTop,
+  onEditCriterion,
+}: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
 
@@ -46,7 +52,11 @@ export function CuppingResultScreen({ entry, onRestart, onBackToTop }: Props) {
 
   return (
     <div className="cupping-result">
-      <CuppingResultCard ref={cardRef} entry={entry} />
+      <CuppingResultCard
+        ref={cardRef}
+        entry={entry}
+        onSelectCriterion={onEditCriterion}
+      />
       <div className="cupping-result-actions">
         <button
           type="button"

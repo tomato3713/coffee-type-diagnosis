@@ -5,6 +5,9 @@ import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 
 interface Props {
   onComplete: (answers: CuppingCriterionAnswer[]) => void;
+  // 既存の回答を編集する場合に渡す。渡さなければ空欄から入力を始める
+  initialAnswers?: CuppingCriterionAnswer[];
+  initialCursor?: number;
 }
 
 // 未回答（スコア未選択）を許す入力中の1項目分の状態
@@ -20,9 +23,19 @@ function emptyDrafts(): Draft[] {
   return CUPPING_CRITERIA.map(() => ({ score: null, tags: [], note: "" }));
 }
 
-export function CuppingScreen({ onComplete }: Props) {
-  const [drafts, setDrafts] = useState<Draft[]>(emptyDrafts);
-  const [cursor, setCursor] = useState(0);
+function draftsFromAnswers(answers: CuppingCriterionAnswer[]): Draft[] {
+  return answers.map((a) => ({ score: a.score, tags: a.tags, note: a.note }));
+}
+
+export function CuppingScreen({
+  onComplete,
+  initialAnswers,
+  initialCursor,
+}: Props) {
+  const [drafts, setDrafts] = useState<Draft[]>(() =>
+    initialAnswers ? draftsFromAnswers(initialAnswers) : emptyDrafts(),
+  );
+  const [cursor, setCursor] = useState(initialCursor ?? 0);
 
   // 現在の draft より前は必ずスコアが確定している（次へ進む条件のため）。
   // 最初の未回答位置までが「回答済み件数」になる

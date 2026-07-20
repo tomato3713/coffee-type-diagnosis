@@ -33,3 +33,13 @@ export function averageScore(answers: CuppingCriterionAnswer[]): number {
   if (answers.length === 0) return 0;
   return Math.round((totalScore(answers) / answers.length) * 10) / 10;
 }
+
+// 各項目で選択したタグから、感想を1文に組み立てる。選択したタグが
+// 1つもなければ空文字を返し、呼び出し側で非表示にできるようにする
+export function composeCuppingSummary(
+  answers: CuppingCriterionAnswer[],
+): string {
+  const tags = answers.flatMap((a) => a.tags);
+  if (tags.length === 0) return "";
+  return `${tags.join("、")}と感じる一杯でした。`;
+}

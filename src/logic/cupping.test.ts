@@ -4,6 +4,7 @@ import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 import {
   averageScore,
   CUPPING_CRITERION_COUNT,
+  composeCuppingSummary,
   cuppingProgress,
   isComplete,
   totalScore,
@@ -64,5 +65,20 @@ describe("cuppingProgress", () => {
       value: 3,
       max: CUPPING_CRITERION_COUNT,
     });
+  });
+});
+
+describe("composeCuppingSummary", () => {
+  it("選択したタグを1文につなげる", () => {
+    const answers = answersWithScore(7);
+    answers[0].tags = ["雑味なし"];
+    answers[4].tags = ["ベリー系"];
+    expect(composeCuppingSummary(answers)).toBe(
+      "雑味なし、ベリー系と感じる一杯でした。",
+    );
+  });
+
+  it("タグが1つも選ばれていなければ空文字を返す", () => {
+    expect(composeCuppingSummary(answersWithScore(7))).toBe("");
   });
 });

@@ -19,6 +19,7 @@ export interface SharedResult {
 // 直接アクセスが 404 にならない
 export const RESULT_PATH = "/result";
 export const WHEEL_PATH = "/wheel";
+export const CUPPING_RESULT_PATH = "/cupping/result";
 
 // location.hash（先頭 # あり/なし両対応）を { path, query } に分解する
 export function parseHashRoute(hash: string): { path: string; query: string } {
@@ -37,6 +38,17 @@ export function buildWheelHash(result: SharedResult | null): string {
   return result
     ? `#${WHEEL_PATH}?${encodeShareQuery(result)}`
     : `#${WHEEL_PATH}`;
+}
+
+// カッピング結果は他人との共有を想定しないため、状態そのものではなく
+// この端末の履歴を引くための id だけをクエリに載せる
+export function buildCuppingResultHash(entryId: string): string {
+  const params = new URLSearchParams({ id: entryId });
+  return `#${CUPPING_RESULT_PATH}?${params.toString()}`;
+}
+
+export function decodeCuppingResultId(search: string): string | null {
+  return new URLSearchParams(search).get("id");
 }
 
 // 例: "t=acid-light-fruity-straight&r=2&p=washed&f=floral,berry"（先頭 ? なし）

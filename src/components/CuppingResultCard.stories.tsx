@@ -54,6 +54,21 @@ export const タグやメモが少ない評価: Story = {
   },
 };
 
+export const 項目をクリックして編集できる状態: Story = {
+  args: {
+    entry: {
+      id: "entry-4",
+      cuppedAt: "2026-07-11T09:00:00.000Z",
+      coffeeName: "ケニア ニエリ",
+      answers: answers({
+        0: { score: 9, tags: ["雑味なし"] },
+        4: { score: 8, tags: ["ベリー系"] },
+      }),
+    },
+    onSelectCriterion: () => {},
+  },
+};
+
 export const 長文メモを含む評価: Story = {
   args: {
     entry: {

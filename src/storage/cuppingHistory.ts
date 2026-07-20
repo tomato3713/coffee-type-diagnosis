@@ -40,10 +40,12 @@ export function loadCuppingHistory(): CuppingHistoryEntry[] {
   }
 }
 
+// 同じ id のエントリが既にあれば更新（先頭に移動）、なければ新規追加する
 export function saveCuppingEntry(
   entry: CuppingHistoryEntry,
 ): CuppingHistoryEntry[] {
-  const entries = [entry, ...loadCuppingHistory()].slice(0, MAX_ENTRIES);
+  const others = loadCuppingHistory().filter((e) => e.id !== entry.id);
+  const entries = [entry, ...others].slice(0, MAX_ENTRIES);
   try {
     const stored: StoredCuppingHistory = { version: VERSION, entries };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));

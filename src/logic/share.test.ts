@@ -7,10 +7,13 @@ import {
   ROAST_LEVELS,
 } from "../data/results";
 import {
+  buildCuppingResultHash,
   buildResultHash,
   buildShareText,
   buildShareUrl,
   buildWheelHash,
+  CUPPING_RESULT_PATH,
+  decodeCuppingResultId,
   decodeShareQuery,
   encodeShareQuery,
   lineShareUrl,
@@ -177,6 +180,18 @@ describe("buildResultHash / buildWheelHash", () => {
 
   it("buildWheelHash は null を渡すとクエリなしの /wheel になる", () => {
     expect(buildWheelHash(null)).toBe(`#${WHEEL_PATH}`);
+  });
+});
+
+describe("buildCuppingResultHash / decodeCuppingResultId", () => {
+  it("エントリ id を /cupping/result パスのクエリに載せる", () => {
+    const { path, query } = parseHashRoute(buildCuppingResultHash("entry-1"));
+    expect(path).toBe(CUPPING_RESULT_PATH);
+    expect(decodeCuppingResultId(query)).toBe("entry-1");
+  });
+
+  it("id パラメータがなければ null になる", () => {
+    expect(decodeCuppingResultId("")).toBeNull();
   });
 });
 
