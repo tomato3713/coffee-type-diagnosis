@@ -209,14 +209,15 @@ function App() {
   // editingEntry がある場合は新規作成ではなく既存エントリの更新になる
   function completeCupping(
     answers: CuppingCriterionAnswer[],
+    coffeeName: string,
     editingEntry: CuppingHistoryEntry | null,
   ) {
     const entry: CuppingHistoryEntry = editingEntry
-      ? { ...editingEntry, answers }
+      ? { ...editingEntry, answers, coffeeName }
       : {
           id: crypto.randomUUID(),
           cuppedAt: new Date().toISOString(),
-          coffeeName: "",
+          coffeeName,
           answers,
         };
     setCuppingHistory(saveCuppingEntry(entry));
@@ -284,11 +285,12 @@ function App() {
       )}
       {screen.name === "cupping" && (
         <CuppingScreen
-          onComplete={(answers) =>
-            completeCupping(answers, screen.editing?.entry ?? null)
+          onComplete={(answers, coffeeName) =>
+            completeCupping(answers, coffeeName, screen.editing?.entry ?? null)
           }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
+          initialCoffeeName={screen.editing?.entry.coffeeName}
         />
       )}
       {screen.name === "cuppingResult" && (

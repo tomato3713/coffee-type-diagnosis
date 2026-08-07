@@ -610,6 +610,23 @@ button {
 }
 
 /* カッピング入力画面 */
+.cupping-coffee-name {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.cupping-coffee-name:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
 .cupping-stage {
   margin: 0 0 4px;
   font-size: 0.8rem;
