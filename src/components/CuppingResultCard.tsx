@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import { useState, type Ref } from "react";
 import { CUPPING_CRITERIA } from "../data/cupping";
 import {
   averageScore,
@@ -11,19 +11,65 @@ interface Props {
   entry: CuppingHistoryEntry;
   // 指定すると各項目のタイルがクリック可能になり、そのIDでコールバックする
   onSelectCriterion?: (index: number) => void;
+  // 指定するとコーヒー名のh1がクリック可能になりインライン編集できる
+  onNameChange?: (name: string) => void;
   ref?: Ref<HTMLDivElement>;
 }
 
 // 画面表示と PNG 出力（html-to-image）で共用するカード。
 // 画像化するため Web フォントや外部画像は使わない
-export function CuppingResultCard({ entry, onSelectCriterion, ref }: Props) {
+export function CuppingResultCard({
+  entry,
+  onSelectCriterion,
+  onNameChange,
+  ref,
+}: Props) {
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(entry.coffeeName);
+
   const summary = composeCuppingSummary(entry.answers);
+
+  function commitName() {
+    setEditingName(false);
+    if (onNameChange) onNameChange(nameValue);
+  }
+
   return (
     <div className="cupping-card" ref={ref}>
       <p className="cupping-card-heading">カッピング記録</p>
-      <h1 className="cupping-card-name">
-        {entry.coffeeName || "名前未記入のコーヒー"}
-      </h1>
+      {onNameChange ? (
+        editingName ? (
+          <input
+            className="cupping-card-name-input"
+            // biome-ignore lint/a11y/noAutofocus: クリックで即座に編集できるようにするため
+            autoFocus
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setNameValue(entry.coffeeName);
+                setEditingName(false);
+              }
+            }}
+          />
+        ) : (
+          <h1
+            className="cupping-card-name cupping-card-name--editable"
+            onClick={() => {
+              setNameValue(entry.coffeeName);
+              setEditingName(true);
+            }}
+          >
+            {entry.coffeeName || "名前未記入のコーヒー"}
+          </h1>
+        )
+      ) : (
+        <h1 className="cupping-card-name">
+          {entry.coffeeName || "名前未記入のコーヒー"}
+        </h1>
+      )}
       {summary && <p className="cupping-card-summary-text">{summary}</p>}
       <dl className="cupping-card-summary">
         <div>

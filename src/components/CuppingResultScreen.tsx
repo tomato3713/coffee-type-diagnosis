@@ -21,7 +21,6 @@ export function CuppingResultScreen({
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
-  const [coffeeName, setCoffeeName] = useState(entry.coffeeName);
 
   async function download() {
     if (!cardRef.current) return;
@@ -53,22 +52,13 @@ export function CuppingResultScreen({
     }
   }
 
-  const displayEntry = { ...entry, coffeeName };
-
   return (
     <div className="cupping-result">
-      <input
-        className="cupping-coffee-name"
-        type="text"
-        placeholder="コーヒー名（任意）"
-        value={coffeeName}
-        onChange={(e) => setCoffeeName(e.target.value)}
-        onBlur={() => onUpdateCoffeeName(coffeeName)}
-      />
       <CuppingResultCard
         ref={cardRef}
-        entry={displayEntry}
+        entry={entry}
         onSelectCriterion={onEditCriterion}
+        onNameChange={onUpdateCoffeeName}
       />
       <div className="cupping-result-actions">
         <button

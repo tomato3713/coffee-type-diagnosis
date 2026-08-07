@@ -609,11 +609,33 @@ button {
   color: var(--color-muted);
 }
 
-/* カッピング入力画面 */
+/* カッピング前のセットアップ画面 */
+.cupping-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cupping-setup-title {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.cupping-setup-description {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.cupping-setup-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+/* セットアップ画面・カッピング中のコーヒー名入力欄 */
 .cupping-coffee-name {
   width: 100%;
   padding: 10px 14px;
-  margin-bottom: 20px;
   border: 1px solid var(--color-line);
   border-radius: 10px;
   background: var(--color-surface);
@@ -828,6 +850,33 @@ button {
   margin: 4px 0 16px;
   color: var(--color-accent-dark);
   font-size: 1.5rem;
+}
+
+.cupping-card-name--editable {
+  cursor: text;
+}
+
+.cupping-card-name--editable:hover {
+  text-decoration: underline dotted;
+}
+
+.cupping-card-name-input {
+  display: block;
+  width: 100%;
+  margin: 4px 0 16px;
+  padding: 0;
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent-dark);
+  font-size: 1.5rem;
+  font-weight: bold;
+  font-family: inherit;
+}
+
+.cupping-card-name-input:focus {
+  outline: none;
 }
 
 .cupping-card-summary-text {

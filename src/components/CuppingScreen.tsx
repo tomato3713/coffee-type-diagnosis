@@ -4,11 +4,10 @@ import { CUPPING_CRITERION_COUNT, cuppingProgress } from "../logic/cupping";
 import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 
 interface Props {
-  onComplete: (answers: CuppingCriterionAnswer[], coffeeName: string) => void;
+  onComplete: (answers: CuppingCriterionAnswer[]) => void;
   // 既存の回答を編集する場合に渡す。渡さなければ空欄から入力を始める
   initialAnswers?: CuppingCriterionAnswer[];
   initialCursor?: number;
-  initialCoffeeName?: string;
 }
 
 // 未回答（スコア未選択）を許す入力中の1項目分の状態
@@ -32,13 +31,11 @@ export function CuppingScreen({
   onComplete,
   initialAnswers,
   initialCursor,
-  initialCoffeeName,
 }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>(() =>
     initialAnswers ? draftsFromAnswers(initialAnswers) : emptyDrafts(),
   );
   const [cursor, setCursor] = useState(initialCursor ?? 0);
-  const [coffeeName, setCoffeeName] = useState(initialCoffeeName ?? "");
 
   // 現在の draft より前は必ずスコアが確定している（次へ進む条件のため）。
   // 最初の未回答位置までが「回答済み件数」になる
@@ -75,7 +72,6 @@ export function CuppingScreen({
         tags: d.tags,
         note: d.note,
       })),
-      coffeeName,
     );
   }
 
@@ -90,13 +86,6 @@ export function CuppingScreen({
 
   return (
     <div className="cupping">
-      <input
-        className="cupping-coffee-name"
-        type="text"
-        placeholder="コーヒー名（任意）"
-        value={coffeeName}
-        onChange={(e) => setCoffeeName(e.target.value)}
-      />
       <p className="cupping-stage">
         {cursor + 1} / {CUPPING_CRITERION_COUNT}　{criterion.label}
       </p>

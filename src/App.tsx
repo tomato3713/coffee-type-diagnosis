@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CuppingResultScreen } from "./components/CuppingResultScreen";
 import { CuppingScreen } from "./components/CuppingScreen";
+import { CuppingSetupScreen } from "./components/CuppingSetupScreen";
 import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
@@ -43,8 +44,10 @@ type Screen =
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
+  | { name: "cuppingSetup" }
   | {
       name: "cupping";
+      coffeeName: string;
       // 結果画面から項目を編集し直す場合に渡す
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
     }
@@ -84,7 +87,11 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
       ? loadCuppingHistory().find((e) => e.id === target.id)
       : undefined;
     if (entry && target) {
-      return { name: "cupping", editing: { entry, startIndex: target.index } };
+      return {
+        name: "cupping",
+        coffeeName: entry.coffeeName,
+        editing: { entry, startIndex: target.index },
+      };
     }
   }
   return { name: "start" };
@@ -117,6 +124,8 @@ function screenPath(screen: Screen): string {
       return "/shared";
     case "tree":
       return "/wheel";
+    case "cuppingSetup":
+      return "/cupping/setup";
     case "cupping":
       return "/cupping";
     case "cuppingResult":
@@ -185,7 +194,11 @@ function App() {
 
   function startCupping() {
     replaceHash("");
-    setScreen({ name: "cupping" });
+    setScreen({ name: "cuppingSetup" });
+  }
+
+  function startCuppingWithName(coffeeName: string) {
+    setScreen({ name: "cupping", coffeeName });
   }
 
   // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
@@ -202,7 +215,11 @@ function App() {
   // どの結果を編集中かをURLに残す
   function editCuppingCriterion(entry: CuppingHistoryEntry, index: number) {
     replaceHash(buildCuppingEditHash(entry.id, index));
-    setScreen({ name: "cupping", editing: { entry, startIndex: index } });
+    setScreen({
+      name: "cupping",
+      coffeeName: entry.coffeeName,
+      editing: { entry, startIndex: index },
+    });
   }
 
   // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない。
@@ -283,14 +300,19 @@ function App() {
           backLabel={screen.highlight ? "診断結果に戻る" : "トップへ"}
         />
       )}
+      {screen.name === "cuppingSetup" && (
+        <CuppingSetupScreen
+          onStart={startCuppingWithName}
+          onBackToTop={backToTop}
+        />
+      )}
       {screen.name === "cupping" && (
         <CuppingScreen
-          onComplete={(answers, coffeeName) =>
-            completeCupping(answers, coffeeName, screen.editing?.entry ?? null)
+          onComplete={(answers) =>
+            completeCupping(answers, screen.coffeeName, screen.editing?.entry ?? null)
           }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
-          initialCoffeeName={screen.editing?.entry.coffeeName}
         />
       )}
       {screen.name === "cuppingResult" && (
