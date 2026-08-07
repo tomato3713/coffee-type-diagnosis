@@ -299,6 +299,11 @@ function App() {
           onRestart={startCupping}
           onBackToTop={backToTop}
           onEditCriterion={(index) => editCuppingCriterion(screen.entry, index)}
+          onUpdateCoffeeName={(name) => {
+            const updated = { ...screen.entry, coffeeName: name };
+            setCuppingHistory(saveCuppingEntry(updated));
+            setScreen({ name: "cuppingResult", entry: updated });
+          }}
         />
       )}
     </main>

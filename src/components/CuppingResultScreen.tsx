@@ -9,6 +9,7 @@ interface Props {
   onRestart: () => void;
   onBackToTop: () => void;
   onEditCriterion: (index: number) => void;
+  onUpdateCoffeeName: (name: string) => void;
 }
 
 export function CuppingResultScreen({
@@ -16,9 +17,11 @@ export function CuppingResultScreen({
   onRestart,
   onBackToTop,
   onEditCriterion,
+  onUpdateCoffeeName,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [coffeeName, setCoffeeName] = useState(entry.coffeeName);
 
   async function download() {
     if (!cardRef.current) return;
@@ -50,11 +53,21 @@ export function CuppingResultScreen({
     }
   }
 
+  const displayEntry = { ...entry, coffeeName };
+
   return (
     <div className="cupping-result">
+      <input
+        className="cupping-coffee-name"
+        type="text"
+        placeholder="コーヒー名（任意）"
+        value={coffeeName}
+        onChange={(e) => setCoffeeName(e.target.value)}
+        onBlur={() => onUpdateCoffeeName(coffeeName)}
+      />
       <CuppingResultCard
         ref={cardRef}
-        entry={entry}
+        entry={displayEntry}
         onSelectCriterion={onEditCriterion}
       />
       <div className="cupping-result-actions">
