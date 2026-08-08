@@ -79,7 +79,7 @@ export function CuppingSetupScreen({ onStart, onBackToTop }: Props) {
         value={coffeeName}
         onChange={(e) => setCoffeeName(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") handleStart();
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) handleStart();
         }}
         autoFocus
       />
