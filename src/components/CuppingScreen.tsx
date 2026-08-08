@@ -133,35 +133,41 @@ export function CuppingScreen({
       <p className="cupping-question">{criterion.prompt}</p>
 
       <div className="cupping-score">
-        <div className="cupping-score-labels">
-          <span className="cupping-score-label">
-            1: {criterion.scoreLowLabel}
-          </span>
-          <span className="cupping-score-label cupping-score-label--right">
-            {criterion.scoreHighLabel} :10
-          </span>
-        </div>
-        <div className="cupping-score-slider-row">
-          <input
-            type="range"
-            className="cupping-score-slider"
-            min={1}
-            max={10}
-            step={1}
-            value={draft.score}
-            onChange={(e) =>
-              updateDraft({
-                score: Number(e.target.value) as CuppingScore,
-                touched: true,
-              })
-            }
-          />
-          <span className={`cupping-score-value${draft.touched ? "" : " is-untouched"}`}>
-            {draft.touched ? draft.score : "—"}
-          </span>
-        </div>
-        {!draft.touched && (
-          <p className="cupping-score-hint">スライダーを動かしてスコアを選んでください</p>
+        {draft.touched ? (
+          <>
+            <div className="cupping-score-labels">
+              <span className="cupping-score-label">
+                1: {criterion.scoreLowLabel}
+              </span>
+              <span className="cupping-score-label cupping-score-label--right">
+                {criterion.scoreHighLabel} :10
+              </span>
+            </div>
+            <div className="cupping-score-slider-row">
+              <input
+                type="range"
+                className="cupping-score-slider"
+                min={1}
+                max={10}
+                step={1}
+                value={draft.score}
+                onChange={(e) =>
+                  updateDraft({
+                    score: Number(e.target.value) as CuppingScore,
+                  })
+                }
+              />
+              <span className="cupping-score-value">{draft.score}</span>
+            </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="cupping-score-unset-button"
+            onClick={() => updateDraft({ touched: true })}
+          >
+            スコアを選ぶ
+          </button>
         )}
       </div>
 
