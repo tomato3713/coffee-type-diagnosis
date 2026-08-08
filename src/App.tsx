@@ -33,6 +33,7 @@ import {
 import { loadCuppingHistory, saveCuppingEntry } from "./storage/cuppingHistory";
 import { loadHistory, saveEntry } from "./storage/history";
 import type {
+  CoffeeInfo,
   CuppingCriterionAnswer,
   CuppingHistoryEntry,
   HistoryEntry,
@@ -47,7 +48,7 @@ type Screen =
   | { name: "cuppingSetup" }
   | {
       name: "cupping";
-      coffeeName: string;
+      coffeeInfo: CoffeeInfo;
       // 結果画面から項目を編集し直す場合に渡す
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
     }
@@ -89,7 +90,13 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
     if (entry && target) {
       return {
         name: "cupping",
-        coffeeName: entry.coffeeName,
+        coffeeInfo: {
+          coffeeName: entry.coffeeName,
+          variety: entry.variety,
+          processMethod: entry.processMethod,
+          purchaseLocation: entry.purchaseLocation,
+          imageDataUrl: entry.imageDataUrl,
+        },
         editing: { entry, startIndex: target.index },
       };
     }
@@ -197,8 +204,8 @@ function App() {
     setScreen({ name: "cuppingSetup" });
   }
 
-  function startCuppingWithName(coffeeName: string) {
-    setScreen({ name: "cupping", coffeeName });
+  function startCuppingWithInfo(info: CoffeeInfo) {
+    setScreen({ name: "cupping", coffeeInfo: info });
   }
 
   // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
@@ -217,7 +224,13 @@ function App() {
     replaceHash(buildCuppingEditHash(entry.id, index));
     setScreen({
       name: "cupping",
-      coffeeName: entry.coffeeName,
+      coffeeInfo: {
+        coffeeName: entry.coffeeName,
+        variety: entry.variety,
+        processMethod: entry.processMethod,
+        purchaseLocation: entry.purchaseLocation,
+        imageDataUrl: entry.imageDataUrl,
+      },
       editing: { entry, startIndex: index },
     });
   }
@@ -226,15 +239,23 @@ function App() {
   // editingEntry がある場合は新規作成ではなく既存エントリの更新になる
   function completeCupping(
     answers: CuppingCriterionAnswer[],
-    coffeeName: string,
+    coffeeInfo: CoffeeInfo,
     editingEntry: CuppingHistoryEntry | null,
   ) {
     const entry: CuppingHistoryEntry = editingEntry
-      ? { ...editingEntry, answers, coffeeName }
+      ? {
+          ...editingEntry,
+          answers,
+          coffeeName: coffeeInfo.coffeeName,
+          variety: coffeeInfo.variety,
+          processMethod: coffeeInfo.processMethod,
+          purchaseLocation: coffeeInfo.purchaseLocation,
+          imageDataUrl: coffeeInfo.imageDataUrl,
+        }
       : {
           id: crypto.randomUUID(),
           cuppedAt: new Date().toISOString(),
-          coffeeName,
+          ...coffeeInfo,
           answers,
         };
     setCuppingHistory(saveCuppingEntry(entry));
@@ -302,14 +323,14 @@ function App() {
       )}
       {screen.name === "cuppingSetup" && (
         <CuppingSetupScreen
-          onStart={startCuppingWithName}
+          onStart={startCuppingWithInfo}
           onBackToTop={backToTop}
         />
       )}
       {screen.name === "cupping" && (
         <CuppingScreen
           onComplete={(answers) =>
-            completeCupping(answers, screen.coffeeName, screen.editing?.entry ?? null)
+            completeCupping(answers, screen.coffeeInfo, screen.editing?.entry ?? null)
           }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
