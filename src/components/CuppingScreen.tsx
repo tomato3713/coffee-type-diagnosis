@@ -10,21 +10,32 @@ interface Props {
   initialCursor?: number;
 }
 
-// 未回答（スコア未選択）を許す入力中の1項目分の状態
+// 入力中の1項目分の状態。touched=false はスライダー未操作（未回答）を表す
 interface Draft {
-  score: CuppingScore | null;
+  score: CuppingScore;
+  touched: boolean;
   tags: string[];
   note: string;
 }
 
-const SCORES: CuppingScore[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const DEFAULT_SCORE: CuppingScore = 5;
 
 function emptyDrafts(): Draft[] {
-  return CUPPING_CRITERIA.map(() => ({ score: null, tags: [], note: "" }));
+  return CUPPING_CRITERIA.map(() => ({
+    score: DEFAULT_SCORE,
+    touched: false,
+    tags: [],
+    note: "",
+  }));
 }
 
 function draftsFromAnswers(answers: CuppingCriterionAnswer[]): Draft[] {
-  return answers.map((a) => ({ score: a.score, tags: a.tags, note: a.note }));
+  return answers.map((a) => ({
+    score: a.score,
+    touched: true,
+    tags: a.tags,
+    note: a.note,
+  }));
 }
 
 export function CuppingScreen({
@@ -37,11 +48,11 @@ export function CuppingScreen({
   );
   const [cursor, setCursor] = useState(initialCursor ?? 0);
 
-  // 現在の draft より前は必ずスコアが確定している（次へ進む条件のため）。
-  // 最初の未回答位置までが「回答済み件数」になる
-  const firstUnanswered = drafts.findIndex((d) => d.score === null);
+  // touched=true の連続した先頭ブロックが「回答済み」。
+  // cursor より前の項目は必ず touched になっている（次へ進む条件のため）
+  const firstUntouched = drafts.findIndex((d) => !d.touched);
   const answeredCount =
-    firstUnanswered === -1 ? CUPPING_CRITERION_COUNT : firstUnanswered;
+    firstUntouched === -1 ? CUPPING_CRITERION_COUNT : firstUntouched;
 
   const criterion = CUPPING_CRITERIA[cursor];
   const draft = drafts[cursor];
@@ -67,8 +78,7 @@ export function CuppingScreen({
     onComplete(
       drafts.map((d, i) => ({
         criterionId: CUPPING_CRITERIA[i].id,
-        // biome-ignore lint/style/noNonNullAssertion: 呼び出し元で全項目のスコア確定を保証している
-        score: d.score!,
+        score: d.score,
         tags: d.tags,
         note: d.note,
       })),
@@ -76,7 +86,7 @@ export function CuppingScreen({
   }
 
   function next() {
-    if (draft.score === null) return;
+    if (!draft.touched) return;
     if (isLast) {
       finish();
       return;
@@ -120,16 +130,36 @@ export function CuppingScreen({
       <p className="cupping-question">{criterion.prompt}</p>
 
       <div className="cupping-score">
-        {SCORES.map((score) => (
-          <button
-            type="button"
-            key={score}
-            className={`cupping-score-button${draft.score === score ? " is-selected" : ""}`}
-            onClick={() => updateDraft({ score })}
-          >
-            {score}
-          </button>
-        ))}
+        <div className="cupping-score-labels">
+          <span className="cupping-score-label">
+            1: {criterion.scoreLowLabel}
+          </span>
+          <span className="cupping-score-label cupping-score-label--right">
+            {criterion.scoreHighLabel} :10
+          </span>
+        </div>
+        <div className="cupping-score-slider-row">
+          <input
+            type="range"
+            className="cupping-score-slider"
+            min={1}
+            max={10}
+            step={1}
+            value={draft.score}
+            onChange={(e) =>
+              updateDraft({
+                score: Number(e.target.value) as CuppingScore,
+                touched: true,
+              })
+            }
+          />
+          <span className={`cupping-score-value${draft.touched ? "" : " is-untouched"}`}>
+            {draft.touched ? draft.score : "—"}
+          </span>
+        </div>
+        {!draft.touched && (
+          <p className="cupping-score-hint">スライダーを動かしてスコアを選んでください</p>
+        )}
       </div>
 
       <div className="cupping-tags">
@@ -171,7 +201,7 @@ export function CuppingScreen({
             type="button"
             className="primary-button"
             onClick={next}
-            disabled={draft.score === null}
+            disabled={!draft.touched}
           >
             {isLast ? "結果を見る" : "次の項目 →"}
           </button>
