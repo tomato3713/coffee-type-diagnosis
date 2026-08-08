@@ -825,6 +825,10 @@ button {
   cursor: pointer;
 }
 
+.cupping-score-slider.is-untouched {
+  accent-color: var(--color-line);
+}
+
 .cupping-score-value {
   min-width: 2rem;
   text-align: center;
@@ -833,21 +837,15 @@ button {
   color: var(--color-accent);
 }
 
-.cupping-score-unset-button {
-  width: 100%;
-  padding: 16px;
-  border: 2px dashed var(--color-line);
-  border-radius: 12px;
-  background: var(--color-surface);
+.cupping-score-value.is-untouched {
   color: var(--color-muted);
-  font: inherit;
-  font-size: 1rem;
-  cursor: pointer;
 }
 
-.cupping-score-unset-button:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+.cupping-score-hint {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  text-align: center;
 }
 
 .cupping-tags {
