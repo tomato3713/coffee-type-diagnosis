@@ -5,6 +5,8 @@ import type { CoffeeInfo, ProcessMethodId } from "../types";
 interface Props {
   onStart: (info: CoffeeInfo) => void;
   onBackToTop: () => void;
+  // 情報入力画面から戻ってきたときに入力内容を復元する
+  initialInfo?: CoffeeInfo;
 }
 
 async function resizeImageToDataUrl(file: File): Promise<string> {
@@ -36,12 +38,12 @@ async function resizeImageToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function CuppingSetupScreen({ onStart, onBackToTop }: Props) {
-  const [coffeeName, setCoffeeName] = useState("");
-  const [variety, setVariety] = useState("");
-  const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">("");
-  const [purchaseLocation, setPurchaseLocation] = useState("");
-  const [imageDataUrl, setImageDataUrl] = useState<string | undefined>();
+export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo }: Props) {
+  const [coffeeName, setCoffeeName] = useState(initialInfo?.coffeeName ?? "");
+  const [variety, setVariety] = useState(initialInfo?.variety ?? "");
+  const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">(initialInfo?.processMethod ?? "");
+  const [purchaseLocation, setPurchaseLocation] = useState(initialInfo?.purchaseLocation ?? "");
+  const [imageDataUrl, setImageDataUrl] = useState<string | undefined>(initialInfo?.imageDataUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {

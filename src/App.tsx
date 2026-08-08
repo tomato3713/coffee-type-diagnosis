@@ -45,7 +45,7 @@ type Screen =
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
-  | { name: "cuppingSetup" }
+  | { name: "cuppingSetup"; initialInfo?: CoffeeInfo }
   | {
       name: "cupping";
       coffeeInfo: CoffeeInfo;
@@ -325,6 +325,7 @@ function App() {
         <CuppingSetupScreen
           onStart={startCuppingWithInfo}
           onBackToTop={backToTop}
+          initialInfo={screen.initialInfo}
         />
       )}
       {screen.name === "cupping" && (
@@ -332,7 +333,14 @@ function App() {
           onComplete={(answers) =>
             completeCupping(answers, screen.coffeeInfo, screen.editing?.entry ?? null)
           }
-          onBackToSetup={screen.editing ? undefined : startCupping}
+          onBackToSetup={
+            screen.editing
+              ? undefined
+              : () => {
+                  replaceHash("");
+                  setScreen({ name: "cuppingSetup", initialInfo: screen.coffeeInfo });
+                }
+          }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
         />
