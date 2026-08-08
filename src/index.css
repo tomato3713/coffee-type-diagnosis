@@ -632,6 +632,76 @@ button {
   color: var(--color-muted);
 }
 
+.cupping-setup-optional {
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.cupping-setup-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.cupping-setup-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.cupping-setup-image-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cupping-setup-file-input {
+  display: none;
+}
+
+.cupping-setup-image-button {
+  padding: 10px 14px;
+  border: 1px dashed var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cupping-setup-image-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.cupping-setup-image-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cupping-setup-preview-img {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.cupping-setup-image-remove {
+  padding: 4px 10px;
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 /* セットアップ画面・カッピング中のコーヒー名入力欄 */
 .cupping-coffee-name {
   width: 100%;
@@ -724,31 +794,54 @@ button {
 }
 
 .cupping-score {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-bottom: 20px;
 }
 
-.cupping-score-button {
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
-  background: var(--color-surface);
-  color: inherit;
-  font-size: 1rem;
+.cupping-score-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cupping-score-label {
+  font-size: 0.8rem;
+  color: var(--color-text-sub, #888);
+}
+
+.cupping-score-label--right {
+  text-align: right;
+}
+
+.cupping-score-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cupping-score-slider {
+  flex: 1;
+  height: 6px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.cupping-score-value {
+  min-width: 2rem;
+  text-align: center;
+  font-size: 1.5rem;
   font-weight: 700;
+  color: var(--color-accent);
 }
 
-.cupping-score-button:hover {
-  border-color: var(--color-accent);
+.cupping-score-value.is-untouched {
+  color: var(--color-text-sub, #888);
 }
 
-.cupping-score-button.is-selected {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: #fff;
+.cupping-score-hint {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--color-text-sub, #888);
+  text-align: center;
 }
 
 .cupping-tags {
@@ -877,6 +970,39 @@ button {
 
 .cupping-card-name-input:focus {
   outline: none;
+}
+
+.cupping-card-image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.cupping-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0 0 16px;
+}
+
+.cupping-card-meta > div {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.cupping-card-meta dt {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.cupping-card-meta dd {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
 }
 
 .cupping-card-summary-text {
