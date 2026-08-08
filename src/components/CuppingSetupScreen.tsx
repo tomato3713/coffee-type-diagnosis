@@ -5,8 +5,10 @@ import type { CoffeeInfo, ProcessMethodId } from "../types";
 interface Props {
   onStart: (info: CoffeeInfo) => void;
   onBackToTop: () => void;
-  // 情報入力画面から戻ってきたときに入力内容を復元する
+  // カッピング評価から戻ってきたとき・結果画面から編集するときに入力内容を復元する
   initialInfo?: CoffeeInfo;
+  // 結果画面からの編集時は true。ボタンラベルを変える
+  isEditing?: boolean;
 }
 
 async function resizeImageToDataUrl(file: File): Promise<string> {
@@ -38,7 +40,7 @@ async function resizeImageToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo }: Props) {
+export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditing }: Props) {
   const [coffeeName, setCoffeeName] = useState(initialInfo?.coffeeName ?? "");
   const [variety, setVariety] = useState(initialInfo?.variety ?? "");
   const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">(initialInfo?.processMethod ?? "");
@@ -173,7 +175,7 @@ export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo }: Props)
         className="primary-button"
         onClick={handleStart}
       >
-        カッピングをはじめる
+        {isEditing ? "保存して結果に戻る" : "カッピングをはじめる"}
       </button>
       <button type="button" className="text-button" onClick={onBackToTop}>
         トップへ戻る

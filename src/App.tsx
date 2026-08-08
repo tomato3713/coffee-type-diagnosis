@@ -45,7 +45,7 @@ type Screen =
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
-  | { name: "cuppingSetup"; initialInfo?: CoffeeInfo }
+  | { name: "cuppingSetup"; initialInfo?: CoffeeInfo; editingEntry?: CuppingHistoryEntry }
   | {
       name: "cupping";
       coffeeInfo: CoffeeInfo;
@@ -208,6 +208,20 @@ function App() {
     setScreen({ name: "cupping", coffeeInfo: info });
   }
 
+  function editCoffeeInfo(entry: CuppingHistoryEntry) {
+    setScreen({
+      name: "cuppingSetup",
+      initialInfo: {
+        coffeeName: entry.coffeeName,
+        variety: entry.variety,
+        processMethod: entry.processMethod,
+        purchaseLocation: entry.purchaseLocation,
+        imageDataUrl: entry.imageDataUrl,
+      },
+      editingEntry: entry,
+    });
+  }
+
   // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
   function showCuppingResult(entry: CuppingHistoryEntry) {
     window.history.pushState(
@@ -323,9 +337,18 @@ function App() {
       )}
       {screen.name === "cuppingSetup" && (
         <CuppingSetupScreen
-          onStart={startCuppingWithInfo}
+          onStart={(info) => {
+            if (screen.editingEntry) {
+              const updated = { ...screen.editingEntry, ...info };
+              setCuppingHistory(saveCuppingEntry(updated));
+              showCuppingResult(updated);
+            } else {
+              startCuppingWithInfo(info);
+            }
+          }}
           onBackToTop={backToTop}
           initialInfo={screen.initialInfo}
+          isEditing={!!screen.editingEntry}
         />
       )}
       {screen.name === "cupping" && (
@@ -351,6 +374,7 @@ function App() {
           onRestart={startCupping}
           onBackToTop={backToTop}
           onEditCriterion={(index) => editCuppingCriterion(screen.entry, index)}
+          onEditCoffeeInfo={() => editCoffeeInfo(screen.entry)}
           onUpdateCoffeeName={(name) => {
             const updated = { ...screen.entry, coffeeName: name };
             setCuppingHistory(saveCuppingEntry(updated));
