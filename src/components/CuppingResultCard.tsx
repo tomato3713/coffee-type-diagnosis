@@ -1,5 +1,6 @@
 import { useState, type Ref } from "react";
 import { CUPPING_CRITERIA } from "../data/cupping";
+import { PROCESS_METHODS } from "../data/results";
 import {
   averageScore,
   composeCuppingSummary,
@@ -69,6 +70,35 @@ export function CuppingResultCard({
         <h1 className="cupping-card-name">
           {entry.coffeeName || "名前未記入のコーヒー"}
         </h1>
+      )}
+      {entry.imageDataUrl && (
+        <img
+          src={entry.imageDataUrl}
+          alt={entry.coffeeName || "コーヒーの写真"}
+          className="cupping-card-image"
+        />
+      )}
+      {(entry.variety || entry.processMethod || entry.purchaseLocation) && (
+        <dl className="cupping-card-meta">
+          {entry.variety && (
+            <div>
+              <dt>品種</dt>
+              <dd>{entry.variety}</dd>
+            </div>
+          )}
+          {entry.processMethod && (
+            <div>
+              <dt>精製方法</dt>
+              <dd>{PROCESS_METHODS[entry.processMethod].label}</dd>
+            </div>
+          )}
+          {entry.purchaseLocation && (
+            <div>
+              <dt>購入場所</dt>
+              <dd>{entry.purchaseLocation}</dd>
+            </div>
+          )}
+        </dl>
       )}
       {summary && <p className="cupping-card-summary-text">{summary}</p>}
       <dl className="cupping-card-summary">
