@@ -5,6 +5,8 @@ import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 
 interface Props {
   onComplete: (answers: CuppingCriterionAnswer[]) => void;
+  // 渡すと1問目の「前へ」で情報入力画面に戻れる。編集モードでは渡さない
+  onBackToSetup?: () => void;
   // 既存の回答を編集する場合に渡す。渡さなければ空欄から入力を始める
   initialAnswers?: CuppingCriterionAnswer[];
   initialCursor?: number;
@@ -40,6 +42,7 @@ function draftsFromAnswers(answers: CuppingCriterionAnswer[]): Draft[] {
 
 export function CuppingScreen({
   onComplete,
+  onBackToSetup,
   initialAnswers,
   initialCursor,
 }: Props) {
@@ -186,10 +189,16 @@ export function CuppingScreen({
         <button
           type="button"
           className="cupping-nav-button"
-          onClick={() => setCursor(cursor - 1)}
-          disabled={cursor === 0}
+          onClick={() => {
+            if (cursor === 0 && onBackToSetup) {
+              onBackToSetup();
+            } else {
+              setCursor(cursor - 1);
+            }
+          }}
+          disabled={cursor === 0 && !onBackToSetup}
         >
-          ← 前の項目
+          {cursor === 0 && onBackToSetup ? "← 情報入力に戻る" : "← 前の項目"}
         </button>
         <div className="cupping-nav-right">
           {isEditing && !isLast && (

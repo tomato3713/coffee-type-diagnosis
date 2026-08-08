@@ -332,6 +332,7 @@ function App() {
           onComplete={(answers) =>
             completeCupping(answers, screen.coffeeInfo, screen.editing?.entry ?? null)
           }
+          onBackToSetup={screen.editing ? undefined : startCupping}
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
         />
