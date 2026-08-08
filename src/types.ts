@@ -160,11 +160,24 @@ export interface CuppingCriterionAnswer {
   note: string;
 }
 
+// カッピング前に入力するコーヒーの基本情報
+export interface CoffeeInfo {
+  coffeeName: string;
+  variety?: string;
+  processMethod?: ProcessMethodId;
+  purchaseLocation?: string;
+  imageDataUrl?: string;
+}
+
 export interface CuppingHistoryEntry {
   id: string;
   cuppedAt: string;
   // 対象コーヒーの名前。任意入力なので空文字を許容する
   coffeeName: string;
+  variety?: string;
+  processMethod?: ProcessMethodId;
+  purchaseLocation?: string;
+  imageDataUrl?: string;
   // 常に8件、CUPPING_CRITERIA と同順で持つ
   answers: CuppingCriterionAnswer[];
 }
