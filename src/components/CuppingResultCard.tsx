@@ -1,4 +1,4 @@
-import { useState, type Ref } from "react";
+import { type Ref, useState } from "react";
 import { CUPPING_CRITERIA } from "../data/cupping";
 import { PROCESS_METHODS } from "../data/results";
 import {
@@ -56,6 +56,7 @@ export function CuppingResultCard({
             }}
           />
         ) : (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: 編集ボタンは別途「コーヒー情報を編集」で提供しているため、ここはクリックのみの補助操作
           <h1
             className="cupping-card-name cupping-card-name--editable"
             onClick={() => {

@@ -156,12 +156,16 @@ export function CuppingScreen({
               })
             }
           />
-          <span className={`cupping-score-value${draft.touched ? "" : " is-untouched"}`}>
+          <span
+            className={`cupping-score-value${draft.touched ? "" : " is-untouched"}`}
+          >
             {draft.touched ? draft.score : "—"}
           </span>
         </div>
         {!draft.touched && (
-          <p className="cupping-score-hint">スライダーを動かしてスコアを選んでください</p>
+          <p className="cupping-score-hint">
+            スライダーを動かしてスコアを選んでください
+          </p>
         )}
       </div>
 

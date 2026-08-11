@@ -71,7 +71,11 @@ export function CuppingResultScreen({
         >
           {saving ? "保存中…" : "画像として保存"}
         </button>
-        <button type="button" className="secondary-button" onClick={onEditCoffeeInfo}>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onEditCoffeeInfo}
+        >
           コーヒー情報を編集
         </button>
         <button type="button" className="secondary-button" onClick={onRestart}>

@@ -40,12 +40,23 @@ async function resizeImageToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditing }: Props) {
+export function CuppingSetupScreen({
+  onStart,
+  onBackToTop,
+  initialInfo,
+  isEditing,
+}: Props) {
   const [coffeeName, setCoffeeName] = useState(initialInfo?.coffeeName ?? "");
   const [variety, setVariety] = useState(initialInfo?.variety ?? "");
-  const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">(initialInfo?.processMethod ?? "");
-  const [purchaseLocation, setPurchaseLocation] = useState(initialInfo?.purchaseLocation ?? "");
-  const [imageDataUrl, setImageDataUrl] = useState<string | undefined>(initialInfo?.imageDataUrl);
+  const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">(
+    initialInfo?.processMethod ?? "",
+  );
+  const [purchaseLocation, setPurchaseLocation] = useState(
+    initialInfo?.purchaseLocation ?? "",
+  );
+  const [imageDataUrl, setImageDataUrl] = useState<string | undefined>(
+    initialInfo?.imageDataUrl,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -85,6 +96,7 @@ export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditin
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.nativeEvent.isComposing) handleStart();
         }}
+        // biome-ignore lint/a11y/noAutofocus: 画面遷移直後にすぐ入力を始められるようにするため
         autoFocus
       />
 
@@ -109,7 +121,9 @@ export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditin
         id="setup-process"
         className="cupping-setup-select"
         value={processMethod}
-        onChange={(e) => setProcessMethod(e.target.value as ProcessMethodId | "")}
+        onChange={(e) =>
+          setProcessMethod(e.target.value as ProcessMethodId | "")
+        }
       >
         <option value="">選択してください</option>
         {Object.values(PROCESS_METHODS).map((m) => (
@@ -139,7 +153,11 @@ export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditin
       <div className="cupping-setup-image-area">
         {imageDataUrl ? (
           <div className="cupping-setup-image-preview">
-            <img src={imageDataUrl} alt="選択した写真" className="cupping-setup-preview-img" />
+            <img
+              src={imageDataUrl}
+              alt="選択した写真"
+              className="cupping-setup-preview-img"
+            />
             <button
               type="button"
               className="cupping-setup-image-remove"
@@ -170,11 +188,7 @@ export function CuppingSetupScreen({ onStart, onBackToTop, initialInfo, isEditin
         />
       </div>
 
-      <button
-        type="button"
-        className="primary-button"
-        onClick={handleStart}
-      >
+      <button type="button" className="primary-button" onClick={handleStart}>
         {isEditing ? "保存して結果に戻る" : "カッピングをはじめる"}
       </button>
       <button type="button" className="text-button" onClick={onBackToTop}>
