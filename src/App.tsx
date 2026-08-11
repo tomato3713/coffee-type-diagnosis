@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { CuppingResultScreen } from "./components/CuppingResultScreen";
-import { CuppingScreen } from "./components/CuppingScreen";
+import {
+  type CuppingFirstDraft,
+  CuppingScreen,
+} from "./components/CuppingScreen";
 import { CuppingSetupScreen } from "./components/CuppingSetupScreen";
 import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
@@ -49,12 +52,16 @@ type Screen =
       name: "cuppingSetup";
       initialInfo?: CoffeeInfo;
       editingEntry?: CuppingHistoryEntry;
+      // cupping 画面の1問目から戻ってきた場合、その入力内容を持ち運ぶ
+      pendingFirstDraft?: CuppingFirstDraft;
     }
   | {
       name: "cupping";
       coffeeInfo: CoffeeInfo;
       // 結果画面から項目を編集し直す場合に渡す
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
+      // 情報入力画面から戻ってきた場合、1問目の入力内容を復元する
+      initialFirstDraft?: CuppingFirstDraft;
     }
   | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
@@ -208,8 +215,11 @@ function App() {
     setScreen({ name: "cuppingSetup" });
   }
 
-  function startCuppingWithInfo(info: CoffeeInfo) {
-    setScreen({ name: "cupping", coffeeInfo: info });
+  function startCuppingWithInfo(
+    info: CoffeeInfo,
+    initialFirstDraft?: CuppingFirstDraft,
+  ) {
+    setScreen({ name: "cupping", coffeeInfo: info, initialFirstDraft });
   }
 
   function editCoffeeInfo(entry: CuppingHistoryEntry) {
@@ -349,7 +359,7 @@ function App() {
               setCuppingHistory(saveCuppingEntry(updated));
               setScreen({ name: "cuppingResult", entry: updated });
             } else {
-              startCuppingWithInfo(info);
+              startCuppingWithInfo(info, screen.pendingFirstDraft);
             }
           }}
           onBackToTop={backToTop}
@@ -369,16 +379,18 @@ function App() {
           onBackToSetup={
             screen.editing
               ? undefined
-              : () => {
+              : (firstDraft) => {
                   replaceHash("");
                   setScreen({
                     name: "cuppingSetup",
                     initialInfo: screen.coffeeInfo,
+                    pendingFirstDraft: firstDraft,
                   });
                 }
           }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
+          initialFirstDraft={screen.initialFirstDraft}
         />
       )}
       {screen.name === "cuppingResult" && (

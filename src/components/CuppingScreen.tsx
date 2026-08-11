@@ -3,13 +3,23 @@ import { CUPPING_CRITERIA } from "../data/cupping";
 import { CUPPING_CRITERION_COUNT, cuppingProgress } from "../logic/cupping";
 import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 
+// 1問目から情報入力画面へ戻る際に、入力中だった内容を持ち運ぶための型
+export interface CuppingFirstDraft {
+  score: CuppingScore;
+  tags: string[];
+  note: string;
+}
+
 interface Props {
   onComplete: (answers: CuppingCriterionAnswer[]) => void;
-  // 渡すと1問目の「前へ」で情報入力画面に戻れる。編集モードでは渡さない
-  onBackToSetup?: () => void;
+  // 渡すと1問目の「前へ」で情報入力画面に戻れる。編集モードでは渡さない。
+  // 戻る時点の1問目の入力内容（未操作なら undefined）を引数で受け取る
+  onBackToSetup?: (firstDraft?: CuppingFirstDraft) => void;
   // 既存の回答を編集する場合に渡す。渡さなければ空欄から入力を始める
   initialAnswers?: CuppingCriterionAnswer[];
   initialCursor?: number;
+  // 情報入力画面から戻ってきたときに1問目の入力内容を復元する
+  initialFirstDraft?: CuppingFirstDraft;
 }
 
 // 入力中の1項目分の状態。touched=false はスライダー未操作（未回答）を表す
@@ -22,13 +32,17 @@ interface Draft {
 
 const DEFAULT_SCORE: CuppingScore = 5;
 
-function emptyDrafts(): Draft[] {
-  return CUPPING_CRITERIA.map(() => ({
-    score: DEFAULT_SCORE,
-    touched: false,
-    tags: [],
-    note: "",
-  }));
+function emptyDrafts(firstDraft?: CuppingFirstDraft): Draft[] {
+  return CUPPING_CRITERIA.map((_, i) =>
+    i === 0 && firstDraft
+      ? {
+          score: firstDraft.score,
+          touched: true,
+          tags: firstDraft.tags,
+          note: firstDraft.note,
+        }
+      : { score: DEFAULT_SCORE, touched: false, tags: [], note: "" },
+  );
 }
 
 function draftsFromAnswers(answers: CuppingCriterionAnswer[]): Draft[] {
@@ -45,9 +59,12 @@ export function CuppingScreen({
   onBackToSetup,
   initialAnswers,
   initialCursor,
+  initialFirstDraft,
 }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>(() =>
-    initialAnswers ? draftsFromAnswers(initialAnswers) : emptyDrafts(),
+    initialAnswers
+      ? draftsFromAnswers(initialAnswers)
+      : emptyDrafts(initialFirstDraft),
   );
   const [cursor, setCursor] = useState(initialCursor ?? 0);
 
@@ -195,7 +212,11 @@ export function CuppingScreen({
           className="cupping-nav-button"
           onClick={() => {
             if (cursor === 0 && onBackToSetup) {
-              onBackToSetup();
+              onBackToSetup(
+                draft.touched
+                  ? { score: draft.score, tags: draft.tags, note: draft.note }
+                  : undefined,
+              );
             } else {
               setCursor(cursor - 1);
             }
