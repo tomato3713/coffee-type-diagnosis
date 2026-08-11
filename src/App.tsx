@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { CuppingResultScreen } from "./components/CuppingResultScreen";
-import { CuppingScreen } from "./components/CuppingScreen";
+import {
+  type CuppingFirstDraft,
+  CuppingScreen,
+} from "./components/CuppingScreen";
+import { CuppingSetupScreen } from "./components/CuppingSetupScreen";
 import { FlavorTreeScreen } from "./components/FlavorTreeScreen";
 import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
@@ -32,6 +36,7 @@ import {
 import { loadCuppingHistory, saveCuppingEntry } from "./storage/cuppingHistory";
 import { loadHistory, saveEntry } from "./storage/history";
 import type {
+  CoffeeInfo,
   CuppingCriterionAnswer,
   CuppingHistoryEntry,
   HistoryEntry,
@@ -44,9 +49,19 @@ type Screen =
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
   | {
+      name: "cuppingSetup";
+      initialInfo?: CoffeeInfo;
+      editingEntry?: CuppingHistoryEntry;
+      // cupping 画面の1問目から戻ってきた場合、その入力内容を持ち運ぶ
+      pendingFirstDraft?: CuppingFirstDraft;
+    }
+  | {
       name: "cupping";
+      coffeeInfo: CoffeeInfo;
       // 結果画面から項目を編集し直す場合に渡す
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
+      // 情報入力画面から戻ってきた場合、1問目の入力内容を復元する
+      initialFirstDraft?: CuppingFirstDraft;
     }
   | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
@@ -84,7 +99,17 @@ function screenFromLocation(lastEntry: HistoryEntry | null): Screen {
       ? loadCuppingHistory().find((e) => e.id === target.id)
       : undefined;
     if (entry && target) {
-      return { name: "cupping", editing: { entry, startIndex: target.index } };
+      return {
+        name: "cupping",
+        coffeeInfo: {
+          coffeeName: entry.coffeeName,
+          variety: entry.variety,
+          processMethod: entry.processMethod,
+          purchaseLocation: entry.purchaseLocation,
+          imageDataUrl: entry.imageDataUrl,
+        },
+        editing: { entry, startIndex: target.index },
+      };
     }
   }
   return { name: "start" };
@@ -117,6 +142,8 @@ function screenPath(screen: Screen): string {
       return "/shared";
     case "tree":
       return "/wheel";
+    case "cuppingSetup":
+      return "/cupping/setup";
     case "cupping":
       return "/cupping";
     case "cuppingResult":
@@ -185,7 +212,28 @@ function App() {
 
   function startCupping() {
     replaceHash("");
-    setScreen({ name: "cupping" });
+    setScreen({ name: "cuppingSetup" });
+  }
+
+  function startCuppingWithInfo(
+    info: CoffeeInfo,
+    initialFirstDraft?: CuppingFirstDraft,
+  ) {
+    setScreen({ name: "cupping", coffeeInfo: info, initialFirstDraft });
+  }
+
+  function editCoffeeInfo(entry: CuppingHistoryEntry) {
+    setScreen({
+      name: "cuppingSetup",
+      initialInfo: {
+        coffeeName: entry.coffeeName,
+        variety: entry.variety,
+        processMethod: entry.processMethod,
+        purchaseLocation: entry.purchaseLocation,
+        imageDataUrl: entry.imageDataUrl,
+      },
+      editingEntry: entry,
+    });
   }
 
   // 履歴に積んで結果画面へ。ブラウザの戻るで呼び出し元へ戻れる
@@ -202,21 +250,40 @@ function App() {
   // どの結果を編集中かをURLに残す
   function editCuppingCriterion(entry: CuppingHistoryEntry, index: number) {
     replaceHash(buildCuppingEditHash(entry.id, index));
-    setScreen({ name: "cupping", editing: { entry, startIndex: index } });
+    setScreen({
+      name: "cupping",
+      coffeeInfo: {
+        coffeeName: entry.coffeeName,
+        variety: entry.variety,
+        processMethod: entry.processMethod,
+        purchaseLocation: entry.purchaseLocation,
+        imageDataUrl: entry.imageDataUrl,
+      },
+      editing: { entry, startIndex: index },
+    });
   }
 
   // カッピングはシェア機能を持たないため、診断結果と違いURLに状態を持たせない。
   // editingEntry がある場合は新規作成ではなく既存エントリの更新になる
   function completeCupping(
     answers: CuppingCriterionAnswer[],
+    coffeeInfo: CoffeeInfo,
     editingEntry: CuppingHistoryEntry | null,
   ) {
     const entry: CuppingHistoryEntry = editingEntry
-      ? { ...editingEntry, answers }
+      ? {
+          ...editingEntry,
+          answers,
+          coffeeName: coffeeInfo.coffeeName,
+          variety: coffeeInfo.variety,
+          processMethod: coffeeInfo.processMethod,
+          purchaseLocation: coffeeInfo.purchaseLocation,
+          imageDataUrl: coffeeInfo.imageDataUrl,
+        }
       : {
           id: crypto.randomUUID(),
           cuppedAt: new Date().toISOString(),
-          coffeeName: "",
+          ...coffeeInfo,
           answers,
         };
     setCuppingHistory(saveCuppingEntry(entry));
@@ -282,13 +349,48 @@ function App() {
           backLabel={screen.highlight ? "診断結果に戻る" : "トップへ"}
         />
       )}
+      {screen.name === "cuppingSetup" && (
+        <CuppingSetupScreen
+          onStart={(info) => {
+            if (screen.editingEntry) {
+              // URL は結果画面に来たときのまま変えていないため、ここで
+              // pushState すると同じ結果ページの履歴エントリが重複する
+              const updated = { ...screen.editingEntry, ...info };
+              setCuppingHistory(saveCuppingEntry(updated));
+              setScreen({ name: "cuppingResult", entry: updated });
+            } else {
+              startCuppingWithInfo(info, screen.pendingFirstDraft);
+            }
+          }}
+          onBackToTop={backToTop}
+          initialInfo={screen.initialInfo}
+          isEditing={!!screen.editingEntry}
+        />
+      )}
       {screen.name === "cupping" && (
         <CuppingScreen
           onComplete={(answers) =>
-            completeCupping(answers, screen.editing?.entry ?? null)
+            completeCupping(
+              answers,
+              screen.coffeeInfo,
+              screen.editing?.entry ?? null,
+            )
+          }
+          onBackToSetup={
+            screen.editing
+              ? undefined
+              : (firstDraft) => {
+                  replaceHash("");
+                  setScreen({
+                    name: "cuppingSetup",
+                    initialInfo: screen.coffeeInfo,
+                    pendingFirstDraft: firstDraft,
+                  });
+                }
           }
           initialAnswers={screen.editing?.entry.answers}
           initialCursor={screen.editing?.startIndex}
+          initialFirstDraft={screen.initialFirstDraft}
         />
       )}
       {screen.name === "cuppingResult" && (
@@ -297,6 +399,12 @@ function App() {
           onRestart={startCupping}
           onBackToTop={backToTop}
           onEditCriterion={(index) => editCuppingCriterion(screen.entry, index)}
+          onEditCoffeeInfo={() => editCoffeeInfo(screen.entry)}
+          onUpdateCoffeeName={(name) => {
+            const updated = { ...screen.entry, coffeeName: name };
+            setCuppingHistory(saveCuppingEntry(updated));
+            setScreen({ name: "cuppingResult", entry: updated });
+          }}
         />
       )}
     </main>

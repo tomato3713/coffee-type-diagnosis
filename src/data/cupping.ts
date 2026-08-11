@@ -8,6 +8,9 @@ export interface CuppingCriterionDef {
   description: string;
   prompt: string;
   tagOptions: string[];
+  // スコアの低い側・高い側の意味を示すラベル
+  scoreLowLabel: string;
+  scoreHighLabel: string;
 }
 
 // flavor/aftertaste 以外は cuppingVocabulary.json の単語をタグ選択肢にする
@@ -25,6 +28,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "カップからカップまで、異臭や欠陥のないクリーンさ",
     prompt: "口に含んだとき、雑味や違和感のある香り・味は感じませんか？",
     tagOptions: VOCABULARY["clean-cup"],
+    scoreLowLabel: "欠点あり",
+    scoreHighLabel: "完全にクリーン",
   },
   {
     id: "sweetness",
@@ -32,6 +37,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "感じられる甘さの質と強さ",
     prompt: "どんな甘さを感じますか？強さはどれくらいですか？",
     tagOptions: VOCABULARY.sweetness,
+    scoreLowLabel: "甘さなし",
+    scoreHighLabel: "甘さ豊か",
   },
   {
     id: "acidity",
@@ -40,6 +47,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     prompt:
       "酸味はどんな印象ですか？明るく弾けるような酸味か、穏やかな酸味か？",
     tagOptions: VOCABULARY.acidity,
+    scoreLowLabel: "酸味弱い",
+    scoreHighLabel: "明るく複雑",
   },
   {
     id: "mouthfeel",
@@ -47,6 +56,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "口に含んだときの質感・重さ・とろみ",
     prompt: "口当たりの重さや質感はどうですか？とろみや軽さを感じますか？",
     tagOptions: VOCABULARY.mouthfeel,
+    scoreLowLabel: "水のよう",
+    scoreHighLabel: "とろみ・豊か",
   },
   {
     id: "flavor",
@@ -54,6 +65,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "香りと味が合わさった風味的特徴",
     prompt: "香りと味を合わせて、どんなフレーバーが浮かびますか？",
     tagOptions: FLAVOR_WHEEL_TAGS,
+    scoreLowLabel: "特徴なし",
+    scoreHighLabel: "複雑で豊か",
   },
   {
     id: "aftertaste",
@@ -61,6 +74,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "飲んだ後に残る余韻の質と長さ",
     prompt: "飲んだ後、どんな風味がどれくらいの長さで残りますか？",
     tagOptions: FLAVOR_WHEEL_TAGS,
+    scoreLowLabel: "余韻なし",
+    scoreHighLabel: "長く心地よい",
   },
   {
     id: "balance",
@@ -69,6 +84,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     prompt:
       "これまでの項目は互いに調和していますか？何かが突出していませんか？",
     tagOptions: VOCABULARY.balance,
+    scoreLowLabel: "バランス悪い",
+    scoreHighLabel: "完璧な調和",
   },
   {
     id: "overall",
@@ -76,6 +93,8 @@ export const CUPPING_CRITERIA: CuppingCriterionDef[] = [
     description: "カッパー自身の総合的な好み・印象",
     prompt: "総合的な印象は？もう一度飲みたいと思いますか？",
     tagOptions: VOCABULARY.overall,
+    scoreLowLabel: "好みでない",
+    scoreHighLabel: "非常に好み",
   },
 ];
 

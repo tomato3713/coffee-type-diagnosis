@@ -9,6 +9,8 @@ interface Props {
   onRestart: () => void;
   onBackToTop: () => void;
   onEditCriterion: (index: number) => void;
+  onUpdateCoffeeName: (name: string) => void;
+  onEditCoffeeInfo: () => void;
 }
 
 export function CuppingResultScreen({
@@ -16,6 +18,8 @@ export function CuppingResultScreen({
   onRestart,
   onBackToTop,
   onEditCriterion,
+  onUpdateCoffeeName,
+  onEditCoffeeInfo,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +60,7 @@ export function CuppingResultScreen({
         ref={cardRef}
         entry={entry}
         onSelectCriterion={onEditCriterion}
+        onNameChange={onUpdateCoffeeName}
       />
       <div className="cupping-result-actions">
         <button
@@ -65,6 +70,13 @@ export function CuppingResultScreen({
           disabled={saving}
         >
           {saving ? "保存中…" : "画像として保存"}
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onEditCoffeeInfo}
+        >
+          コーヒー情報を編集
         </button>
         <button type="button" className="secondary-button" onClick={onRestart}>
           もう一度カッピングする

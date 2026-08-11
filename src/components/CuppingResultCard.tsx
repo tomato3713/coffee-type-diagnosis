@@ -1,5 +1,6 @@
-import type { Ref } from "react";
+import { type Ref, useState } from "react";
 import { CUPPING_CRITERIA } from "../data/cupping";
+import { PROCESS_METHODS } from "../data/results";
 import {
   averageScore,
   composeCuppingSummary,
@@ -11,19 +12,95 @@ interface Props {
   entry: CuppingHistoryEntry;
   // 指定すると各項目のタイルがクリック可能になり、そのIDでコールバックする
   onSelectCriterion?: (index: number) => void;
+  // 指定するとコーヒー名のh1がクリック可能になりインライン編集できる
+  onNameChange?: (name: string) => void;
   ref?: Ref<HTMLDivElement>;
 }
 
 // 画面表示と PNG 出力（html-to-image）で共用するカード。
 // 画像化するため Web フォントや外部画像は使わない
-export function CuppingResultCard({ entry, onSelectCriterion, ref }: Props) {
+export function CuppingResultCard({
+  entry,
+  onSelectCriterion,
+  onNameChange,
+  ref,
+}: Props) {
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(entry.coffeeName);
+
   const summary = composeCuppingSummary(entry.answers);
+
+  function commitName() {
+    setEditingName(false);
+    if (onNameChange) onNameChange(nameValue);
+  }
+
   return (
     <div className="cupping-card" ref={ref}>
       <p className="cupping-card-heading">カッピング記録</p>
-      <h1 className="cupping-card-name">
-        {entry.coffeeName || "名前未記入のコーヒー"}
-      </h1>
+      {onNameChange ? (
+        editingName ? (
+          <input
+            className="cupping-card-name-input"
+            // biome-ignore lint/a11y/noAutofocus: クリックで即座に編集できるようにするため
+            autoFocus
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setNameValue(entry.coffeeName);
+                setEditingName(false);
+              }
+            }}
+          />
+        ) : (
+          // biome-ignore lint/a11y/useKeyWithClickEvents: 編集ボタンは別途「コーヒー情報を編集」で提供しているため、ここはクリックのみの補助操作
+          <h1
+            className="cupping-card-name cupping-card-name--editable"
+            onClick={() => {
+              setNameValue(entry.coffeeName);
+              setEditingName(true);
+            }}
+          >
+            {entry.coffeeName || "名前未記入のコーヒー"}
+          </h1>
+        )
+      ) : (
+        <h1 className="cupping-card-name">
+          {entry.coffeeName || "名前未記入のコーヒー"}
+        </h1>
+      )}
+      {entry.imageDataUrl && (
+        <img
+          src={entry.imageDataUrl}
+          alt={entry.coffeeName || "コーヒーの写真"}
+          className="cupping-card-image"
+        />
+      )}
+      {(entry.variety || entry.processMethod || entry.purchaseLocation) && (
+        <dl className="cupping-card-meta">
+          {entry.variety && (
+            <div>
+              <dt>品種</dt>
+              <dd>{entry.variety}</dd>
+            </div>
+          )}
+          {entry.processMethod && (
+            <div>
+              <dt>精製方法</dt>
+              <dd>{PROCESS_METHODS[entry.processMethod].label}</dd>
+            </div>
+          )}
+          {entry.purchaseLocation && (
+            <div>
+              <dt>購入場所</dt>
+              <dd>{entry.purchaseLocation}</dd>
+            </div>
+          )}
+        </dl>
+      )}
       {summary && <p className="cupping-card-summary-text">{summary}</p>}
       <dl className="cupping-card-summary">
         <div>
