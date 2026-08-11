@@ -45,7 +45,11 @@ type Screen =
   | { name: "result"; entry: HistoryEntry }
   | { name: "shared"; result: SharedResult }
   | { name: "tree"; highlight: SharedResult | null }
-  | { name: "cuppingSetup"; initialInfo?: CoffeeInfo; editingEntry?: CuppingHistoryEntry }
+  | {
+      name: "cuppingSetup";
+      initialInfo?: CoffeeInfo;
+      editingEntry?: CuppingHistoryEntry;
+    }
   | {
       name: "cupping";
       coffeeInfo: CoffeeInfo;
@@ -339,9 +343,11 @@ function App() {
         <CuppingSetupScreen
           onStart={(info) => {
             if (screen.editingEntry) {
+              // URL は結果画面に来たときのまま変えていないため、ここで
+              // pushState すると同じ結果ページの履歴エントリが重複する
               const updated = { ...screen.editingEntry, ...info };
               setCuppingHistory(saveCuppingEntry(updated));
-              showCuppingResult(updated);
+              setScreen({ name: "cuppingResult", entry: updated });
             } else {
               startCuppingWithInfo(info);
             }
@@ -354,14 +360,21 @@ function App() {
       {screen.name === "cupping" && (
         <CuppingScreen
           onComplete={(answers) =>
-            completeCupping(answers, screen.coffeeInfo, screen.editing?.entry ?? null)
+            completeCupping(
+              answers,
+              screen.coffeeInfo,
+              screen.editing?.entry ?? null,
+            )
           }
           onBackToSetup={
             screen.editing
               ? undefined
               : () => {
                   replaceHash("");
-                  setScreen({ name: "cuppingSetup", initialInfo: screen.coffeeInfo });
+                  setScreen({
+                    name: "cuppingSetup",
+                    initialInfo: screen.coffeeInfo,
+                  });
                 }
           }
           initialAnswers={screen.editing?.entry.answers}
