@@ -26,5 +26,7 @@ export const カッピング結果: Story = {
     onRestart: () => {},
     onBackToTop: () => {},
     onEditCriterion: () => {},
+    onUpdateCoffeeName: () => {},
+    onEditCoffeeInfo: () => {},
   },
 };
