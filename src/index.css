@@ -716,11 +716,12 @@ button {
 }
 
 .cupping-setup-mode-choice {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 14px 16px;
-  border: 1px solid var(--color-line);
+  padding: 14px 16px 14px 44px;
+  border: 2px solid var(--color-line);
   border-radius: 12px;
   background: var(--color-surface);
   color: inherit;
@@ -732,9 +733,30 @@ button {
   border-color: var(--color-accent);
 }
 
+/* ラジオボタン風のインジケーター。選択状態が枠線の色だけでは
+   わかりにくかったため、丸印でも選択中かを判別できるようにする */
+.cupping-setup-mode-choice::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-line);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
 .cupping-setup-mode-choice.is-selected {
   border-color: var(--color-accent);
-  background: var(--color-bg);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+}
+
+.cupping-setup-mode-choice.is-selected::before {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow: inset 0 0 0 3px var(--color-surface);
 }
 
 .cupping-setup-mode-choice-label {
