@@ -702,6 +702,50 @@ button {
   cursor: pointer;
 }
 
+.cupping-setup-mode {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.cupping-setup-mode-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cupping-setup-mode-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cupping-setup-mode-choice:hover {
+  border-color: var(--color-accent);
+}
+
+.cupping-setup-mode-choice.is-selected {
+  border-color: var(--color-accent);
+  background: var(--color-bg);
+}
+
+.cupping-setup-mode-choice-label {
+  font-weight: 700;
+}
+
+.cupping-setup-mode-choice-desc {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
 /* セットアップ画面・カッピング中のコーヒー名入力欄 */
 .cupping-coffee-name {
   width: 100%;
@@ -1102,4 +1146,17 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.cupping-result-upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cupping-result-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-align: center;
 }

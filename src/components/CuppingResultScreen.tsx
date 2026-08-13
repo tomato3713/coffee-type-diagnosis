@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { cuppingModeOf } from "../logic/cupping";
 import { isTouchDevice } from "../logic/device";
 import type { CuppingHistoryEntry } from "../types";
 import { CuppingResultCard } from "./CuppingResultCard";
@@ -11,6 +12,9 @@ interface Props {
   onEditCriterion: (index: number) => void;
   onUpdateCoffeeName: (name: string) => void;
   onEditCoffeeInfo: () => void;
+  // 簡易モードのエントリのときだけボタンを表示する。detailedへの
+  // アップグレード専用で、逆方向（detailed→simple）は提供しない
+  onUpgradeToDetailed: () => void;
 }
 
 export function CuppingResultScreen({
@@ -20,6 +24,7 @@ export function CuppingResultScreen({
   onEditCriterion,
   onUpdateCoffeeName,
   onEditCoffeeInfo,
+  onUpgradeToDetailed,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
@@ -78,6 +83,18 @@ export function CuppingResultScreen({
         >
           コーヒー情報を編集
         </button>
+        {cuppingModeOf(entry) === "simple" && (
+          <div className="cupping-result-upgrade">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onUpgradeToDetailed}
+            >
+              詳細記録に切り替える
+            </button>
+            <p className="cupping-result-hint">残り4項目を追加入力できます</p>
+          </div>
+        )}
         <button type="button" className="secondary-button" onClick={onRestart}>
           もう一度カッピングする
         </button>

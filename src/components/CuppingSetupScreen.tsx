@@ -1,13 +1,16 @@
 import { useRef, useState } from "react";
 import { PROCESS_METHODS } from "../data/results";
-import type { CoffeeInfo, ProcessMethodId } from "../types";
+import type { CoffeeInfo, CuppingMode, ProcessMethodId } from "../types";
 
 interface Props {
-  onStart: (info: CoffeeInfo) => void;
+  onStart: (info: CoffeeInfo, mode: CuppingMode) => void;
   onBackToTop: () => void;
   // カッピング評価から戻ってきたとき・結果画面から編集するときに入力内容を復元する
   initialInfo?: CoffeeInfo;
-  // 結果画面からの編集時は true。ボタンラベルを変える
+  // 1問目から戻ってきたときに選択中のモードを復元する
+  initialMode?: CuppingMode;
+  // 結果画面からの編集時は true。ボタンラベルを変え、モード選択は隠す
+  // （モード変更は結果画面の「詳細記録に切り替える」導線でのみ行う）
   isEditing?: boolean;
 }
 
@@ -44,8 +47,10 @@ export function CuppingSetupScreen({
   onStart,
   onBackToTop,
   initialInfo,
+  initialMode,
   isEditing,
 }: Props) {
+  const [mode, setMode] = useState<CuppingMode>(initialMode ?? "detailed");
   const [coffeeName, setCoffeeName] = useState(initialInfo?.coffeeName ?? "");
   const [variety, setVariety] = useState(initialInfo?.variety ?? "");
   const [processMethod, setProcessMethod] = useState<ProcessMethodId | "">(
@@ -67,13 +72,16 @@ export function CuppingSetupScreen({
   }
 
   function handleStart() {
-    onStart({
-      coffeeName,
-      variety: variety || undefined,
-      processMethod: processMethod || undefined,
-      purchaseLocation: purchaseLocation || undefined,
-      imageDataUrl,
-    });
+    onStart(
+      {
+        coffeeName,
+        variety: variety || undefined,
+        processMethod: processMethod || undefined,
+        purchaseLocation: purchaseLocation || undefined,
+        imageDataUrl,
+      },
+      mode,
+    );
   }
 
   return (
@@ -82,6 +90,38 @@ export function CuppingSetupScreen({
       <p className="cupping-setup-description">
         評価するコーヒーの情報を入力してください
       </p>
+
+      {!isEditing && (
+        <fieldset className="cupping-setup-mode">
+          <legend className="cupping-setup-label">カッピングモード</legend>
+          <div className="cupping-setup-mode-choices">
+            <button
+              type="button"
+              className={`cupping-setup-mode-choice${mode === "detailed" ? " is-selected" : ""}`}
+              onClick={() => setMode("detailed")}
+            >
+              <span className="cupping-setup-mode-choice-label">
+                詳細カッピング
+              </span>
+              <span className="cupping-setup-mode-choice-desc">
+                Cup of Excellenceの8項目をじっくり評価
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`cupping-setup-mode-choice${mode === "simple" ? " is-selected" : ""}`}
+              onClick={() => setMode("simple")}
+            >
+              <span className="cupping-setup-mode-choice-label">
+                簡易カッピング
+              </span>
+              <span className="cupping-setup-mode-choice-desc">
+                酸味・甘さ・口当たり・総合の4項目でさっと記録
+              </span>
+            </button>
+          </div>
+        </fieldset>
+      )}
 
       <label className="cupping-setup-label" htmlFor="setup-coffee-name">
         コーヒー名

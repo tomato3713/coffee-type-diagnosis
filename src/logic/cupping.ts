@@ -1,16 +1,22 @@
+import type { CuppingCriterionDef } from "../data/cupping";
 import { CUPPING_CRITERIA } from "../data/cupping";
-import type { CuppingCriterionAnswer } from "../types";
+import type { CuppingCriterionAnswer, CuppingMode } from "../types";
 
-export const CUPPING_CRITERION_COUNT = CUPPING_CRITERIA.length;
+// mode 未設定（旧データ）は detailed として扱う。以後 entry.mode を
+// 直接見る箇所は作らず、必ずこの関数経由で判定する
+export function cuppingModeOf(entry: { mode?: CuppingMode }): CuppingMode {
+  return entry.mode ?? "detailed";
+}
 
-// 8項目すべてに回答済みか（重複なく全項目のIDが揃っているか）を判定する
-export function isComplete(answers: CuppingCriterionAnswer[]): boolean {
-  if (answers.length !== CUPPING_CRITERION_COUNT) return false;
+// criteria の項目すべてに回答済みか（重複なく全項目のIDが揃っているか）を判定する。
+// criteria省略時は既存の詳細8項目で検証する（後方互換のデフォルト）
+export function isComplete(
+  answers: CuppingCriterionAnswer[],
+  criteria: CuppingCriterionDef[] = CUPPING_CRITERIA,
+): boolean {
+  if (answers.length !== criteria.length) return false;
   const ids = new Set(answers.map((a) => a.criterionId));
-  return (
-    ids.size === CUPPING_CRITERION_COUNT &&
-    CUPPING_CRITERIA.every((c) => ids.has(c.id))
-  );
+  return ids.size === criteria.length && criteria.every((c) => ids.has(c.id));
 }
 
 export interface CuppingProgress {
@@ -18,9 +24,12 @@ export interface CuppingProgress {
   max: number;
 }
 
-// 評価画面の進捗バー用。max は常に項目数（8）で固定
-export function cuppingProgress(answeredCount: number): CuppingProgress {
-  return { value: answeredCount, max: CUPPING_CRITERION_COUNT };
+// 評価画面の進捗バー用。max はモードの項目数（詳細8/簡易4）
+export function cuppingProgress(
+  answeredCount: number,
+  max: number,
+): CuppingProgress {
+  return { value: answeredCount, max };
 }
 
 // 8項目のスコア合計（8〜80）

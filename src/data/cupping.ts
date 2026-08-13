@@ -1,4 +1,4 @@
-import type { CuppingCriterionId, CuppingScore } from "../types";
+import type { CuppingCriterionId, CuppingMode, CuppingScore } from "../types";
 import vocabulary from "./cuppingVocabulary.json";
 import { FLAVOR_CATEGORIES } from "./results";
 
@@ -104,6 +104,23 @@ export function findCuppingCriterion(
   const criterion = CUPPING_CRITERIA.find((c) => c.id === id);
   if (!criterion) throw new Error(`unknown cupping criterion: ${id}`);
   return criterion;
+}
+
+// 簡易モードで評価する4項目。基本的な味覚三要素（甘味・酸味・質感）と
+// 総合印象に絞り、フレーバー深掘りや欠点検出は詳細モードの役割として残す
+export const SIMPLE_CUPPING_CRITERION_IDS: CuppingCriterionId[] = [
+  "acidity",
+  "sweetness",
+  "mouthfeel",
+  "overall",
+];
+
+// 表示順の唯一の正準ソースは CUPPING_CRITERIA。モード別の項目配列は
+// そこから filter して作り、二重管理を避ける
+export function criteriaForMode(mode: CuppingMode): CuppingCriterionDef[] {
+  if (mode === "detailed") return CUPPING_CRITERIA;
+  const ids = new Set(SIMPLE_CUPPING_CRITERION_IDS);
+  return CUPPING_CRITERIA.filter((c) => ids.has(c.id));
 }
 
 export function isCuppingScore(value: number): value is CuppingScore {

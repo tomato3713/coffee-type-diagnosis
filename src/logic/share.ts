@@ -6,7 +6,12 @@ import {
   PROCESS_METHODS,
   RESULT_TYPES,
 } from "../data/results";
-import type { FlavorCategoryId, ProcessMethodId, RoastLevel } from "../types";
+import type {
+  CuppingCriterionId,
+  FlavorCategoryId,
+  ProcessMethodId,
+  RoastLevel,
+} from "../types";
 
 export interface SharedResult {
   typeId: string;
@@ -55,13 +60,17 @@ export function decodeCuppingResultId(search: string): string | null {
 
 export interface CuppingEditTarget {
   id: string;
-  index: number;
+  criterionId: CuppingCriterionId;
 }
 
 // 再入力（編集）中も、どのエントリのどの項目からやり直しているかを
-// URL から復元できるようにする
-export function buildCuppingEditHash(entryId: string, index: number): string {
-  const params = new URLSearchParams({ id: entryId, i: String(index) });
+// URL から復元できるようにする。項目の位置はモード（詳細/簡易）で
+// 変わるため、数値indexではなくcriterionIdそのものを載せる
+export function buildCuppingEditHash(
+  entryId: string,
+  criterionId: CuppingCriterionId,
+): string {
+  const params = new URLSearchParams({ id: entryId, c: criterionId });
   return `#${CUPPING_EDIT_PATH}?${params.toString()}`;
 }
 
@@ -70,16 +79,15 @@ export function decodeCuppingEditQuery(
 ): CuppingEditTarget | null {
   const params = new URLSearchParams(search);
   const id = params.get("id");
-  const index = Number(params.get("i"));
+  const criterionId = params.get("c");
   if (
     !id ||
-    !Number.isInteger(index) ||
-    index < 0 ||
-    index >= CUPPING_CRITERIA.length
+    !criterionId ||
+    !CUPPING_CRITERIA.some((c) => c.id === criterionId)
   ) {
     return null;
   }
-  return { id, index };
+  return { id, criterionId: criterionId as CuppingCriterionId };
 }
 
 // 例: "t=acid-light-fruity-straight&r=2&p=washed&f=floral,berry"（先頭 ? なし）

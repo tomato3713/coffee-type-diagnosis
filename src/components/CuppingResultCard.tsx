@@ -1,9 +1,10 @@
 import { type Ref, useState } from "react";
-import { CUPPING_CRITERIA } from "../data/cupping";
+import { criteriaForMode } from "../data/cupping";
 import { PROCESS_METHODS } from "../data/results";
 import {
   averageScore,
   composeCuppingSummary,
+  cuppingModeOf,
   totalScore,
 } from "../logic/cupping";
 import type { CuppingHistoryEntry } from "../types";
@@ -28,6 +29,7 @@ export function CuppingResultCard({
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(entry.coffeeName);
 
+  const criteria = criteriaForMode(cuppingModeOf(entry));
   const summary = composeCuppingSummary(entry.answers);
 
   function commitName() {
@@ -105,7 +107,9 @@ export function CuppingResultCard({
       <dl className="cupping-card-summary">
         <div>
           <dt>合計スコア</dt>
-          <dd>{totalScore(entry.answers)} / 80</dd>
+          <dd>
+            {totalScore(entry.answers)} / {entry.answers.length * 10}
+          </dd>
         </div>
         <div>
           <dt>平均スコア</dt>
@@ -113,7 +117,7 @@ export function CuppingResultCard({
         </div>
       </dl>
       <section className="cupping-card-criteria">
-        {CUPPING_CRITERIA.map((criterion, i) => {
+        {criteria.map((criterion, i) => {
           const answer = entry.answers[i];
           const body = (
             <>

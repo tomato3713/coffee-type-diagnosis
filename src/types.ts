@@ -169,6 +169,9 @@ export interface CoffeeInfo {
   imageDataUrl?: string;
 }
 
+// detailed: 8項目すべてを評価する詳細モード / simple: 代表4項目のみのお手軽モード
+export type CuppingMode = "detailed" | "simple";
+
 export interface CuppingHistoryEntry {
   id: string;
   cuppedAt: string;
@@ -178,6 +181,8 @@ export interface CuppingHistoryEntry {
   processMethod?: ProcessMethodId;
   purchaseLocation?: string;
   imageDataUrl?: string;
-  // 常に8件、CUPPING_CRITERIA と同順で持つ
+  // 未設定の既存データは detailed として扱う（cuppingModeOf経由で判定する）
+  mode?: CuppingMode;
+  // criteriaForMode(mode) と同順・同数で持つ
   answers: CuppingCriterionAnswer[];
 }

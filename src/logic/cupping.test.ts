@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CUPPING_CRITERIA } from "../data/cupping";
+import { CUPPING_CRITERIA, criteriaForMode } from "../data/cupping";
 import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 import {
   averageScore,
-  CUPPING_CRITERION_COUNT,
   composeCuppingSummary,
+  cuppingModeOf,
   cuppingProgress,
   isComplete,
   totalScore,
@@ -60,11 +60,45 @@ describe("isComplete", () => {
 });
 
 describe("cuppingProgress", () => {
-  it("value に渡した回答数、max に項目数を返す", () => {
-    expect(cuppingProgress(3)).toEqual({
+  it("value に渡した回答数、max に渡した項目数を返す", () => {
+    expect(cuppingProgress(3, CUPPING_CRITERIA.length)).toEqual({
       value: 3,
-      max: CUPPING_CRITERION_COUNT,
+      max: CUPPING_CRITERIA.length,
     });
+  });
+});
+
+describe("cuppingModeOf", () => {
+  it("mode未設定のエントリはdetailedとして扱われる", () => {
+    expect(cuppingModeOf({})).toBe("detailed");
+  });
+
+  it("mode: simpleのエントリはsimpleとして扱われる", () => {
+    expect(cuppingModeOf({ mode: "simple" })).toBe("simple");
+  });
+});
+
+describe("isComplete with criteria option", () => {
+  it("criteriaの項目数より回答数が少ないときはfalseになる", () => {
+    const simpleCriteria = criteriaForMode("simple");
+    const answers = simpleCriteria.slice(0, 3).map((c) => ({
+      criterionId: c.id,
+      score: 5 as CuppingScore,
+      tags: [],
+      note: "",
+    }));
+    expect(isComplete(answers, simpleCriteria)).toBe(false);
+  });
+
+  it("criteriaが4件のとき4件揃った回答でtrueになる", () => {
+    const simpleCriteria = criteriaForMode("simple");
+    const answers = simpleCriteria.map((c) => ({
+      criterionId: c.id,
+      score: 5 as CuppingScore,
+      tags: [],
+      note: "",
+    }));
+    expect(isComplete(answers, simpleCriteria)).toBe(true);
   });
 });
 
