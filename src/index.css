@@ -702,6 +702,72 @@ button {
   cursor: pointer;
 }
 
+.cupping-setup-mode {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.cupping-setup-mode-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cupping-setup-mode-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px 14px 44px;
+  border: 2px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cupping-setup-mode-choice:hover {
+  border-color: var(--color-accent);
+}
+
+/* ラジオボタン風のインジケーター。選択状態が枠線の色だけでは
+   わかりにくかったため、丸印でも選択中かを判別できるようにする */
+.cupping-setup-mode-choice::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-line);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.cupping-setup-mode-choice.is-selected {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+}
+
+.cupping-setup-mode-choice.is-selected::before {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow: inset 0 0 0 3px var(--color-surface);
+}
+
+.cupping-setup-mode-choice-label {
+  font-weight: 700;
+}
+
+.cupping-setup-mode-choice-desc {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
 /* セットアップ画面・カッピング中のコーヒー名入力欄 */
 .cupping-coffee-name {
   width: 100%;
@@ -1102,4 +1168,17 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.cupping-result-upgrade {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cupping-result-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  text-align: center;
 }

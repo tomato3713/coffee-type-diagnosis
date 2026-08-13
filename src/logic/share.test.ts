@@ -199,20 +199,27 @@ describe("buildCuppingResultHash / decodeCuppingResultId", () => {
 });
 
 describe("buildCuppingEditHash / decodeCuppingEditQuery", () => {
-  it("エントリ id と項目インデックスを /cupping/edit パスのクエリに載せる", () => {
-    const { path, query } = parseHashRoute(buildCuppingEditHash("entry-1", 3));
+  it("エントリ id と項目IDを /cupping/edit パスのクエリに載せる", () => {
+    const { path, query } = parseHashRoute(
+      buildCuppingEditHash("entry-1", "mouthfeel"),
+    );
     expect(path).toBe(CUPPING_EDIT_PATH);
-    expect(decodeCuppingEditQuery(query)).toEqual({ id: "entry-1", index: 3 });
+    expect(decodeCuppingEditQuery(query)).toEqual({
+      id: "entry-1",
+      criterionId: "mouthfeel",
+    });
   });
 
   it("id が欠落していると null になる", () => {
-    expect(decodeCuppingEditQuery("i=3")).toBeNull();
+    expect(decodeCuppingEditQuery("c=mouthfeel")).toBeNull();
   });
 
-  it("インデックスが範囲外だと null になる", () => {
-    expect(decodeCuppingEditQuery("id=entry-1&i=-1")).toBeNull();
-    expect(decodeCuppingEditQuery("id=entry-1&i=8")).toBeNull();
-    expect(decodeCuppingEditQuery("id=entry-1&i=abc")).toBeNull();
+  it("項目IDが未知の値だと null になる", () => {
+    expect(decodeCuppingEditQuery("id=entry-1&c=unknown")).toBeNull();
+  });
+
+  it("項目IDが欠落していると null になる", () => {
+    expect(decodeCuppingEditQuery("id=entry-1")).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
-import { isCuppingScore } from "../data/cupping";
-import { isComplete } from "../logic/cupping";
+import { criteriaForMode, isCuppingScore } from "../data/cupping";
+import { cuppingModeOf, isComplete } from "../logic/cupping";
 import type { CuppingHistoryEntry } from "../types";
 
 const STORAGE_KEY = "coffee-type-diagnosis/cupping-history";
@@ -12,8 +12,9 @@ interface StoredCuppingHistory {
 }
 
 function isValidEntry(entry: CuppingHistoryEntry): boolean {
+  const criteria = criteriaForMode(cuppingModeOf(entry));
   return (
-    isComplete(entry.answers) &&
+    isComplete(entry.answers, criteria) &&
     entry.answers.every((a) => isCuppingScore(a.score))
   );
 }

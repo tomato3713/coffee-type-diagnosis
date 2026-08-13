@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CuppingCriterionId } from "../types";
 import {
   CUPPING_CRITERIA,
+  criteriaForMode,
   findCuppingCriterion,
   isCuppingScore,
 } from "./cupping";
@@ -46,6 +47,25 @@ describe("findCuppingCriterion", () => {
     expect(() => findCuppingCriterion("unknown" as CuppingCriterionId)).toThrow(
       /unknown cupping criterion/,
     );
+  });
+});
+
+describe("criteriaForMode", () => {
+  it("detailedはCUPPING_CRITERIAと同じ8件を返す", () => {
+    expect(criteriaForMode("detailed")).toEqual(CUPPING_CRITERIA);
+  });
+
+  it("simpleはacidity・sweetness・mouthfeel・overallの4件を返す", () => {
+    const ids = criteriaForMode("simple").map((c) => c.id);
+    expect(ids).toEqual(["sweetness", "acidity", "mouthfeel", "overall"]);
+  });
+
+  it("simpleが返す項目の順序はCUPPING_CRITERIAでの並び順を保つ", () => {
+    const simpleIds = new Set(criteriaForMode("simple").map((c) => c.id));
+    const expectedOrder = CUPPING_CRITERIA.filter((c) =>
+      simpleIds.has(c.id),
+    ).map((c) => c.id);
+    expect(criteriaForMode("simple").map((c) => c.id)).toEqual(expectedOrder);
   });
 });
 

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { CUPPING_CRITERIA } from "../data/cupping";
+import { CUPPING_CRITERIA, criteriaForMode } from "../data/cupping";
 import type { CuppingCriterionAnswer } from "../types";
 import { CuppingResultCard } from "./CuppingResultCard";
 
@@ -66,6 +66,24 @@ export const 項目をクリックして編集できる状態: Story = {
       }),
     },
     onSelectCriterion: () => {},
+  },
+};
+
+// 4項目のタイルのみ表示される
+export const 簡易モードの評価: Story = {
+  args: {
+    entry: {
+      id: "entry-5",
+      cuppedAt: "2026-07-11T09:00:00.000Z",
+      coffeeName: "グアテマラ アンティグア",
+      mode: "simple",
+      answers: criteriaForMode("simple").map((c) => ({
+        criterionId: c.id,
+        score: 7,
+        tags: [],
+        note: "",
+      })),
+    },
   },
 };
 

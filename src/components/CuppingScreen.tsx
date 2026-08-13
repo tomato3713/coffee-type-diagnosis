@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { CUPPING_CRITERIA } from "../data/cupping";
-import { CUPPING_CRITERION_COUNT, cuppingProgress } from "../logic/cupping";
+import type { CuppingCriterionDef } from "../data/cupping";
+import { cuppingProgress } from "../logic/cupping";
 import type { CuppingCriterionAnswer, CuppingScore } from "../types";
 
 // 1問目から情報入力画面へ戻る際に、入力中だった内容を持ち運ぶための型
@@ -11,11 +11,15 @@ export interface CuppingFirstDraft {
 }
 
 interface Props {
+  // 評価する項目の配列。詳細モードは8件、簡易モードは4件、
+  // アップグレード再開時は8件（うち一部は回答済み）を渡す
+  criteria: CuppingCriterionDef[];
   onComplete: (answers: CuppingCriterionAnswer[]) => void;
   // 渡すと1問目の「前へ」で情報入力画面に戻れる。編集モードでは渡さない。
   // 戻る時点の1問目の入力内容（未操作なら undefined）を引数で受け取る
   onBackToSetup?: (firstDraft?: CuppingFirstDraft) => void;
-  // 既存の回答を編集する場合に渡す。渡さなければ空欄から入力を始める
+  // 既存の回答を編集する場合に渡す。criteria全件と一致しない
+  // 部分回答（アップグレード時）も渡せる。渡さなければ空欄から入力を始める
   initialAnswers?: CuppingCriterionAnswer[];
   initialCursor?: number;
   // 情報入力画面から戻ってきたときに1問目の入力内容を復元する
@@ -32,8 +36,11 @@ interface Draft {
 
 const DEFAULT_SCORE: CuppingScore = 5;
 
-function emptyDrafts(firstDraft?: CuppingFirstDraft): Draft[] {
-  return CUPPING_CRITERIA.map((_, i) =>
+function emptyDrafts(
+  criteria: CuppingCriterionDef[],
+  firstDraft?: CuppingFirstDraft,
+): Draft[] {
+  return criteria.map((_, i) =>
     i === 0 && firstDraft
       ? {
           score: firstDraft.score,
@@ -45,16 +52,23 @@ function emptyDrafts(firstDraft?: CuppingFirstDraft): Draft[] {
   );
 }
 
-function draftsFromAnswers(answers: CuppingCriterionAnswer[]): Draft[] {
-  return answers.map((a) => ({
-    score: a.score,
-    touched: true,
-    tags: a.tags,
-    note: a.note,
-  }));
+// criteria の各項目について、answers に該当する回答があれば touched な
+// Draft、なければ未回答Draftを補う。全件揃った編集も、アップグレード時の
+// 部分回答（一部項目だけ回答済み）からの再開も、この1関数でカバーする
+function draftsFromPartialAnswers(
+  criteria: CuppingCriterionDef[],
+  answers: CuppingCriterionAnswer[],
+): Draft[] {
+  return criteria.map((c) => {
+    const a = answers.find((x) => x.criterionId === c.id);
+    return a
+      ? { score: a.score, touched: true, tags: a.tags, note: a.note }
+      : { score: DEFAULT_SCORE, touched: false, tags: [], note: "" };
+  });
 }
 
 export function CuppingScreen({
+  criteria,
   onComplete,
   onBackToSetup,
   initialAnswers,
@@ -63,23 +77,32 @@ export function CuppingScreen({
 }: Props) {
   const [drafts, setDrafts] = useState<Draft[]>(() =>
     initialAnswers
-      ? draftsFromAnswers(initialAnswers)
-      : emptyDrafts(initialFirstDraft),
+      ? draftsFromPartialAnswers(criteria, initialAnswers)
+      : emptyDrafts(criteria, initialFirstDraft),
   );
   const [cursor, setCursor] = useState(initialCursor ?? 0);
 
-  // touched=true の連続した先頭ブロックが「回答済み」。
-  // cursor より前の項目は必ず touched になっている（次へ進む条件のため）
-  const firstUntouched = drafts.findIndex((d) => !d.touched);
-  const answeredCount =
-    firstUntouched === -1 ? CUPPING_CRITERION_COUNT : firstUntouched;
-
-  const criterion = CUPPING_CRITERIA[cursor];
-  const draft = drafts[cursor];
-  const progress = cuppingProgress(Math.min(answeredCount, cursor));
-  const isLast = cursor === CUPPING_CRITERION_COUNT - 1;
   // 編集時は全項目のスコアが既に確定しているため、途中からでも結果に戻れる
   const isEditing = initialAnswers !== undefined;
+  const allTouched = drafts.every((d) => d.touched);
+
+  // 新規入力時は touched=true の連続した先頭ブロックが「回答済み」
+  // （cursorより前は必ずtouched）。編集時はアップグレードで非連続に
+  // touched/untouchedが混在しうるため、単純にtouched数を数える
+  const firstUntouched = drafts.findIndex((d) => !d.touched);
+  const answeredCount = isEditing
+    ? drafts.filter((d) => d.touched).length
+    : firstUntouched === -1
+      ? criteria.length
+      : firstUntouched;
+
+  const criterion = criteria[cursor];
+  const draft = drafts[cursor];
+  const progress = cuppingProgress(
+    Math.min(answeredCount, cursor),
+    criteria.length,
+  );
+  const isLast = cursor === criteria.length - 1;
 
   function updateDraft(patch: Partial<Draft>) {
     setDrafts((prev) =>
@@ -95,9 +118,12 @@ export function CuppingScreen({
   }
 
   function finish() {
+    // アップグレード再開時は未回答項目が残ったまま丸ドットで最後の項目へ
+    // 直接ジャンプできてしまうため、全項目touched前提のここでガードする
+    if (!allTouched) return;
     onComplete(
       drafts.map((d, i) => ({
-        criterionId: CUPPING_CRITERIA[i].id,
+        criterionId: criteria[i].id,
         score: d.score,
         tags: d.tags,
         note: d.note,
@@ -117,7 +143,7 @@ export function CuppingScreen({
   return (
     <div className="cupping">
       <p className="cupping-stage">
-        {cursor + 1} / {CUPPING_CRITERION_COUNT}　{criterion.label}
+        {cursor + 1} / {criteria.length}　{criterion.label}
       </p>
       <progress
         className="cupping-progress"
@@ -125,7 +151,7 @@ export function CuppingScreen({
         max={progress.max}
       />
       <nav className="cupping-map" aria-label="評価項目の一覧">
-        {CUPPING_CRITERIA.map((c, i) => {
+        {criteria.map((c, i) => {
           const state =
             i === cursor
               ? " is-current"
@@ -138,7 +164,9 @@ export function CuppingScreen({
               key={c.id}
               className={`cupping-map-dot${state}`}
               aria-label={`${c.label}へ`}
-              disabled={i > answeredCount}
+              // 編集中（通常の見直し・アップグレード再開）はどの項目にも
+              // 自由に移動できる。新規入力時のみ未回答より先へは進めない
+              disabled={!isEditing && i > answeredCount}
               onClick={() => setCursor(i)}
             />
           );
@@ -226,7 +254,7 @@ export function CuppingScreen({
           {cursor === 0 && onBackToSetup ? "← 情報入力に戻る" : "← 前の項目"}
         </button>
         <div className="cupping-nav-right">
-          {isEditing && !isLast && (
+          {isEditing && !isLast && allTouched && (
             <button type="button" className="secondary-button" onClick={finish}>
               保存して結果に戻る
             </button>
@@ -235,7 +263,7 @@ export function CuppingScreen({
             type="button"
             className="primary-button"
             onClick={next}
-            disabled={!draft.touched}
+            disabled={!draft.touched || (isLast && !allTouched)}
           >
             {isLast ? "結果を見る" : "次の項目 →"}
           </button>

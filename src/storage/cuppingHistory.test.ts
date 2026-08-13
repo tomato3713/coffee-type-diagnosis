@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { CUPPING_CRITERIA } from "../data/cupping";
+import { CUPPING_CRITERIA, criteriaForMode } from "../data/cupping";
 import type { CuppingHistoryEntry, CuppingScore } from "../types";
 import { loadCuppingHistory, saveCuppingEntry } from "./cuppingHistory";
 
@@ -103,6 +103,38 @@ describe("loadCuppingHistory / saveCuppingEntry", () => {
     expect(entries.length).toBe(50);
     expect(entries[0].id).toBe("entry-54");
     expect(entries.at(-1)?.id).toBe("entry-5");
+  });
+
+  it("mode: simpleで4件の回答を持つエントリは読み込める", () => {
+    const entry = createEntry({
+      mode: "simple",
+      answers: criteriaForMode("simple").map((c) => ({
+        criterionId: c.id,
+        score: 7 as CuppingScore,
+        tags: [],
+        note: "",
+      })),
+    });
+    saveCuppingEntry(entry);
+    expect(loadCuppingHistory().map((e) => e.id)).toEqual([entry.id]);
+  });
+
+  it("mode: simpleなのに8件の回答を持つエントリは捨てられる", () => {
+    const entry = createEntry({ mode: "simple" });
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [entry] }),
+    );
+    expect(loadCuppingHistory()).toEqual([]);
+  });
+
+  it("mode未設定（旧データ）で8件の回答を持つエントリは読み込める", () => {
+    const entry = createEntry();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [entry] }),
+    );
+    expect(loadCuppingHistory().map((e) => e.id)).toEqual([entry.id]);
   });
 
   it("localStorage が使えなくても例外を投げない", () => {
