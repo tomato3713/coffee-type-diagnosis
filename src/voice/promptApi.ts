@@ -24,14 +24,16 @@ export async function checkTastingModelAvailability(): Promise<Availability> {
   }
 }
 
-// 感想の文字起こしを端末内のモデルで構造化する。初回はモデルの
-// ダウンロードが走るため、進捗（0〜1）を onDownloadProgress で通知する
-export async function summarizeTasting(
+// 評価項目の指示を持たせたベースセッションを作る。初回はここでモデルの
+// ダウンロードが走るため、進捗（0〜1）を onDownloadProgress で通知する。
+// ダウンロードの開始にはユーザー操作が必要なので、ボタン押下の直後に呼ぶこと。
+// async にしているのは、非対応環境で LanguageModel が未定義のときの
+// ReferenceError を同期例外ではなく reject として呼び出し側に返すため
+export async function createTastingSession(
   criteria: CuppingCriterionDef[],
-  transcript: string,
   onDownloadProgress?: (loaded: number) => void,
-): Promise<CuppingCriterionAnswer[]> {
-  const session = await LanguageModel.create({
+): Promise<LanguageModel> {
+  return LanguageModel.create({
     ...LANGUAGE_OPTIONS,
     initialPrompts: [
       { role: "system", content: buildTastingSystemPrompt(criteria) },
@@ -42,14 +44,23 @@ export async function summarizeTasting(
       });
     },
   });
+}
+
+// 感想の文字起こしを端末内のモデルで構造化する
+export async function summarizeTasting(
+  base: LanguageModel,
+  criteria: CuppingCriterionDef[],
+  transcript: string,
+): Promise<CuppingCriterionAnswer[]> {
+  // ベースを直接使わず毎回 clone する。前回の感想が文脈に残ると、
+  // 言い直して再実行したときに古い内容が記録に混ざってしまうため
+  const session = await base.clone();
   try {
     const raw = await session.prompt(transcript, {
       responseConstraint: buildTastingSchema(criteria),
     });
     return parseTastingResponse(raw, criteria);
   } finally {
-    // セッションは1回の要約ごとに作り捨てる。前の感想が文脈に残ると
-    // 別のコーヒーの記録に混ざってしまうため
     session.destroy();
   }
 }

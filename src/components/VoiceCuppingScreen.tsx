@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CuppingCriterionDef } from "../data/cupping";
 import type { CuppingCriterionAnswer } from "../types";
-import { summarizeTasting } from "../voice/promptApi";
+import { createTastingSession, summarizeTasting } from "../voice/promptApi";
 import {
   isSpeechRecognitionSupported,
   useSpeechRecognition,
@@ -19,7 +19,7 @@ interface Props {
 
 type Status =
   | { kind: "idle" }
-  | { kind: "summarizing"; downloaded?: number }
+  | { kind: "summarizing" }
   | { kind: "error"; message: string };
 
 export function VoiceCuppingScreen({
@@ -36,13 +36,43 @@ export function VoiceCuppingScreen({
   );
   const speechSupported = isSpeechRecognitionSupported();
   const busy = status.kind === "summarizing";
+  // モデルのダウンロード進捗（0〜1）。ダウンロードが走らなければ null のまま
+  const [downloaded, setDownloaded] = useState<number | null>(null);
+  const sessionRef = useRef<Promise<LanguageModel> | null>(null);
+
+  // 失敗したら ref を空に戻し、次の呼び出しで作り直せるようにする
+  function ensureSession(): Promise<LanguageModel> {
+    if (!sessionRef.current) {
+      const promise = createTastingSession(criteria, setDownloaded);
+      sessionRef.current = promise;
+      promise.catch(() => {
+        if (sessionRef.current === promise) sessionRef.current = null;
+      });
+    }
+    return sessionRef.current;
+  }
+
+  // セットアップ画面の「話して記録する」押下直後にマウントされるので、
+  // そのユーザー操作の有効期間内にモデルのダウンロードを始められる。
+  // 話している間に裏でダウンロードを進め、初回の待ち時間を隠すため。
+  // ここで失敗しても「記録にまとめる」押下時に作り直す
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ensureSession は毎レンダー作り直されるが、criteria が同じなら作るセッションも同じため
+  useEffect(() => {
+    const promise = ensureSession();
+    return () => {
+      sessionRef.current = null;
+      promise.then((s) => s.destroy()).catch(() => {});
+    };
+  }, [criteria]);
 
   async function summarize() {
     speech.stop();
     setStatus({ kind: "summarizing" });
     try {
-      const answers = await summarizeTasting(criteria, transcript, (loaded) =>
-        setStatus({ kind: "summarizing", downloaded: loaded }),
+      const answers = await summarizeTasting(
+        await ensureSession(),
+        criteria,
+        transcript,
       );
       if (answers.length === 0) {
         setStatus({
@@ -105,11 +135,15 @@ export function VoiceCuppingScreen({
         </p>
       )}
 
+      {downloaded !== null && downloaded < 1 && (
+        <p className="voice-cupping-status" aria-live="polite">
+          AIモデルを準備中… {Math.round(downloaded * 100)}%
+          （話している間に進めておきます）
+        </p>
+      )}
       {status.kind === "summarizing" && (
         <p className="voice-cupping-status" aria-live="polite">
-          {status.downloaded !== undefined && status.downloaded < 1
-            ? `AIモデルをダウンロード中… ${Math.round(status.downloaded * 100)}%`
-            : "記録にまとめています…"}
+          記録にまとめています…
         </p>
       )}
       {status.kind === "error" && (
