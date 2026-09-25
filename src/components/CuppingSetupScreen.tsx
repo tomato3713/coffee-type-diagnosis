@@ -1,9 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PROCESS_METHODS } from "../data/results";
 import type { CoffeeInfo, CuppingMode, ProcessMethodId } from "../types";
+import { checkTastingModelAvailability } from "../voice/promptApi";
 
 interface Props {
   onStart: (info: CoffeeInfo, mode: CuppingMode) => void;
+  // 渡すと、端末内AIが使える環境で「話して記録する」導線を出す
+  onStartVoice?: (info: CoffeeInfo, mode: CuppingMode) => void;
   onBackToTop: () => void;
   // カッピング評価から戻ってきたとき・結果画面から編集するときに入力内容を復元する
   initialInfo?: CoffeeInfo;
@@ -45,6 +48,7 @@ async function resizeImageToDataUrl(file: File): Promise<string> {
 
 export function CuppingSetupScreen({
   onStart,
+  onStartVoice,
   onBackToTop,
   initialInfo,
   initialMode,
@@ -63,6 +67,19 @@ export function CuppingSetupScreen({
     initialInfo?.imageDataUrl,
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 非対応ブラウザで押せないボタンを見せないよう、判定が済むまで隠しておく
+  const [voiceAvailable, setVoiceAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!onStartVoice || isEditing) return;
+    let cancelled = false;
+    checkTastingModelAvailability().then((availability) => {
+      if (!cancelled) setVoiceAvailable(availability !== "unavailable");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [onStartVoice, isEditing]);
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -71,17 +88,18 @@ export function CuppingSetupScreen({
     setImageDataUrl(dataUrl);
   }
 
+  function currentInfo(): CoffeeInfo {
+    return {
+      coffeeName,
+      variety: variety || undefined,
+      processMethod: processMethod || undefined,
+      purchaseLocation: purchaseLocation || undefined,
+      imageDataUrl,
+    };
+  }
+
   function handleStart() {
-    onStart(
-      {
-        coffeeName,
-        variety: variety || undefined,
-        processMethod: processMethod || undefined,
-        purchaseLocation: purchaseLocation || undefined,
-        imageDataUrl,
-      },
-      mode,
-    );
+    onStart(currentInfo(), mode);
   }
 
   return (
@@ -231,6 +249,15 @@ export function CuppingSetupScreen({
       <button type="button" className="primary-button" onClick={handleStart}>
         {isEditing ? "保存して結果に戻る" : "カッピングをはじめる"}
       </button>
+      {voiceAvailable && onStartVoice && (
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => onStartVoice(currentInfo(), mode)}
+        >
+          話して記録する
+        </button>
+      )}
       <button type="button" className="text-button" onClick={onBackToTop}>
         トップへ戻る
       </button>
