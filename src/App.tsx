@@ -10,9 +10,14 @@ import { QuizScreen } from "./components/QuizScreen";
 import { ResultScreen } from "./components/ResultScreen";
 import { SharedResultScreen } from "./components/SharedResultScreen";
 import { StartScreen } from "./components/StartScreen";
-import { CUPPING_CRITERIA, criteriaForMode } from "./data/cupping";
+import { VoiceCuppingScreen } from "./components/VoiceCuppingScreen";
+import {
+  CUPPING_CRITERIA,
+  type CuppingCriterionDef,
+  criteriaForMode,
+} from "./data/cupping";
 import { trackPageView } from "./logic/analytics";
-import { cuppingModeOf } from "./logic/cupping";
+import { cuppingModeOf, isComplete } from "./logic/cupping";
 import {
   diagnose,
   diagnoseFlavor,
@@ -69,7 +74,10 @@ type Screen =
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
       // 情報入力画面から戻ってきた場合、1問目の入力内容を復元する
       initialFirstDraft?: CuppingFirstDraft;
+      // 音声から構造化したが一部の項目が欠けた回答。欠けた項目をフォームで埋めてもらう
+      voiceAnswers?: CuppingCriterionAnswer[];
     }
+  | { name: "voiceCupping"; coffeeInfo: CoffeeInfo; mode: CuppingMode }
   | { name: "cuppingResult"; entry: CuppingHistoryEntry };
 
 // URL（#/result?t=&f= / #/wheel?t=&f=）から表示すべき画面を導出する。
@@ -174,9 +182,24 @@ function screenPath(screen: Screen): string {
       return "/cupping/setup";
     case "cupping":
       return "/cupping";
+    case "voiceCupping":
+      return "/cupping/voice";
     case "cuppingResult":
       return "/cupping/result";
   }
+}
+
+// 音声で埋まらなかった最初の項目から確認を始められるようにする。
+// 全項目埋まっていれば先頭から見直してもらう
+function firstUnansweredIndex(
+  criteria: CuppingCriterionDef[],
+  answers: CuppingCriterionAnswer[] | undefined,
+): number | undefined {
+  if (!answers) return undefined;
+  const index = criteria.findIndex(
+    (c) => !answers.some((a) => a.criterionId === c.id),
+  );
+  return index === -1 ? 0 : index;
 }
 
 function App() {
@@ -420,6 +443,9 @@ function App() {
               startCuppingWithInfo(info, mode, screen.pendingFirstDraft);
             }
           }}
+          onStartVoice={(info, mode) =>
+            setScreen({ name: "voiceCupping", coffeeInfo: info, mode })
+          }
           onBackToTop={backToTop}
           initialInfo={screen.initialInfo}
           initialMode={screen.pendingMode}
@@ -438,7 +464,9 @@ function App() {
             )
           }
           onBackToSetup={
-            screen.editing
+            // 音声の回答は1問目の下書きとして持ち運べないため、
+            // 戻る導線は出さず項目ドットでの移動に任せる
+            screen.editing || screen.voiceAnswers
               ? undefined
               : (firstDraft) => {
                   replaceHash("");
@@ -450,9 +478,48 @@ function App() {
                   });
                 }
           }
-          initialAnswers={screen.editing?.entry.answers}
-          initialCursor={screen.editing?.startIndex}
+          initialAnswers={screen.editing?.entry.answers ?? screen.voiceAnswers}
+          initialCursor={
+            screen.editing?.startIndex ??
+            firstUnansweredIndex(
+              criteriaForMode(screen.mode),
+              screen.voiceAnswers,
+            )
+          }
           initialFirstDraft={screen.initialFirstDraft}
+        />
+      )}
+      {screen.name === "voiceCupping" && (
+        <VoiceCuppingScreen
+          criteria={criteriaForMode(screen.mode)}
+          onSummarized={(voiceAnswers) => {
+            // 全項目揃えばそのまま保存して結果へ。直したい項目は結果画面の
+            // 編集導線で直せる。モデルの出力が一部不正で欠けた場合だけ、
+            // 欠けた項目をフォームで補ってもらう
+            if (isComplete(voiceAnswers, criteriaForMode(screen.mode))) {
+              completeCupping(
+                voiceAnswers,
+                screen.coffeeInfo,
+                null,
+                screen.mode,
+              );
+              return;
+            }
+            setScreen({
+              name: "cupping",
+              coffeeInfo: screen.coffeeInfo,
+              mode: screen.mode,
+              voiceAnswers,
+            });
+          }}
+          onUseForm={() => startCuppingWithInfo(screen.coffeeInfo, screen.mode)}
+          onBack={() =>
+            setScreen({
+              name: "cuppingSetup",
+              initialInfo: screen.coffeeInfo,
+              pendingMode: screen.mode,
+            })
+          }
         />
       )}
       {screen.name === "cuppingResult" && (

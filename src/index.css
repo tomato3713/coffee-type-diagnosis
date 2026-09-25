@@ -1182,3 +1182,82 @@ button {
   font-size: 0.8rem;
   text-align: center;
 }
+
+.voice-cupping {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.voice-cupping-mic {
+  padding: 16px;
+  border: 2px solid var(--color-accent);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.voice-cupping-mic.is-listening {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.voice-cupping-mic:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voice-cupping-transcript {
+  min-height: 160px;
+}
+
+.voice-cupping-interim,
+.voice-cupping-status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.voice-cupping-error {
+  margin: 0;
+  color: #a33a2a;
+  font-size: 0.9rem;
+}
+
+.voice-cupping-guide {
+  padding: 12px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.voice-cupping-guide-title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.voice-cupping-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.voice-cupping-guide-label {
+  display: block;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.voice-cupping-guide-note {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}

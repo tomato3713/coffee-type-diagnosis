@@ -117,10 +117,15 @@ export const SIMPLE_CUPPING_CRITERION_IDS: CuppingCriterionId[] = [
 
 // 表示順の唯一の正準ソースは CUPPING_CRITERIA。モード別の項目配列は
 // そこから filter して作り、二重管理を避ける
+// モジュール読み込み時に一度だけ作り、呼び出しごとに同じ配列を返す。
+// 毎回 filter すると参照が変わり、criteria を依存に持つ effect
+// （音声記録画面のモデル準備など）がレンダーのたびに再実行されてしまうため
+const SIMPLE_CUPPING_CRITERIA = CUPPING_CRITERIA.filter((c) =>
+  SIMPLE_CUPPING_CRITERION_IDS.includes(c.id),
+);
+
 export function criteriaForMode(mode: CuppingMode): CuppingCriterionDef[] {
-  if (mode === "detailed") return CUPPING_CRITERIA;
-  const ids = new Set(SIMPLE_CUPPING_CRITERION_IDS);
-  return CUPPING_CRITERIA.filter((c) => ids.has(c.id));
+  return mode === "detailed" ? CUPPING_CRITERIA : SIMPLE_CUPPING_CRITERIA;
 }
 
 export function isCuppingScore(value: number): value is CuppingScore {

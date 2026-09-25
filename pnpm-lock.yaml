@@ -30,6 +30,12 @@ importers:
       '@storybook/react-vite':
         specifier: 10.5.0
         version: 10.5.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.0(@types/react@19.2.18)(react@19.2.8))(typescript@7.0.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1))
+      '@types/dom-chromium-ai':
+        specifier: ^0.0.17
+        version: 0.0.17
+      '@types/dom-speech-recognition':
+        specifier: ^0.0.12
+        version: 0.0.12
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.3
@@ -869,6 +875,12 @@ packages:
 
   '@types/doctrine@0.0.9':
     resolution: {integrity: sha512-eOIHzCUSH7SMfonMG1LsC2f8vxBFtho6NGBznK41R84YzPuvSBzrhEps33IsQiOW9+VL6NQ9DbjQJznk/S4uRA==}
+
+  '@types/dom-chromium-ai@0.0.17':
+    resolution: {integrity: sha512-UnSAIVKONaY2vTAM4TkPpwdKeGgg3tPCwNP3KxR+U8bLYC2rQU7UrgW9LIVx0B02dKZxuPA6a0Q5wvyW5Rk6nw==}
+
+  '@types/dom-speech-recognition@0.0.12':
+    resolution: {integrity: sha512-SmLovKV3e/J71U5CBmKYe03Q75biuw7jiEWGoO1arc47CjtmxCr+W7cPJcAAwySSJFwr+jWkr/fPVuVuL+D6Dw==}
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
@@ -2375,6 +2387,10 @@ snapshots:
   '@types/deep-eql@4.0.2': {}
 
   '@types/doctrine@0.0.9': {}
+
+  '@types/dom-chromium-ai@0.0.17': {}
+
+  '@types/dom-speech-recognition@0.0.12': {}
 
   '@types/estree@1.0.9': {}
 
