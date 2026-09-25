@@ -97,10 +97,30 @@ export function VoiceCuppingScreen({
     <div className="voice-cupping">
       <h1 className="cupping-setup-title">話して記録する</h1>
       <p className="cupping-setup-description">
-        飲みながら感じたことを自由に話してください。
-        {criteria.map((c) => c.label).join("・")}
-        について触れると、端末内のAIが記録にまとめます。
+        飲みながら感じたことを自由に話してください。端末内のAIが記録にまとめます。
       </p>
+
+      {/* 項目ごとの問いかけはフォーム入力と同じ文言を使う。話す内容の
+          ヒントを別に書くと、フォームと音声で聞いていることがずれるため */}
+      <section
+        className="voice-cupping-guide"
+        aria-labelledby="voice-guide-title"
+      >
+        <h2 id="voice-guide-title" className="voice-cupping-guide-title">
+          こんなことを話してみてください
+        </h2>
+        <ul className="voice-cupping-guide-list">
+          {criteria.map((c) => (
+            <li key={c.id}>
+              <span className="voice-cupping-guide-label">{c.label}</span>
+              {c.prompt}
+            </li>
+          ))}
+        </ul>
+        <p className="voice-cupping-guide-note">
+          すべてに触れなくても大丈夫です。話さなかった項目は感想全体から推定し、あとで結果ページから直せます。
+        </p>
+      </section>
 
       {speechSupported && (
         <button
