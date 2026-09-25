@@ -9,7 +9,8 @@ import {
 
 interface Props {
   criteria: CuppingCriterionDef[];
-  // 言及された項目だけの部分回答を渡す。未回答の項目はフォームで埋めてもらう
+  // 検証を通った項目の回答を渡す。通常は全項目揃うが、モデルの出力が
+  // 一部不正だと欠けることがある
   onSummarized: (answers: CuppingCriterionAnswer[]) => void;
   onUseForm: () => void;
   onBack: () => void;

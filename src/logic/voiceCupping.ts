@@ -14,7 +14,6 @@ export function buildTastingSchema(criteria: CuppingCriterionDef[]) {
         {
           type: "object",
           properties: {
-            mentioned: { type: "boolean" },
             score: { type: "integer", minimum: 1, maximum: 10 },
             tags: {
               type: "array",
@@ -22,7 +21,7 @@ export function buildTastingSchema(criteria: CuppingCriterionDef[]) {
             },
             note: { type: "string" },
           },
-          required: ["mentioned", "score", "tags", "note"],
+          required: ["score", "tags", "note"],
           additionalProperties: false,
         },
       ]),
@@ -46,23 +45,22 @@ export function buildTastingSystemPrompt(
     "ユーザーがコーヒーを飲みながら話した感想の文字起こしを読み、次の評価項目ごとに記録を作ってください。",
     ...lines,
     "ルール:",
-    "- 感想の中でその項目に触れていなければ mentioned を false にし、score は 5、tags は空、note は空文字にしてください。推測で埋めてはいけません。",
-    "- 触れている項目は mentioned を true にし、話した強さや好みから score を1〜10で付けてください。",
+    "- すべての項目に score を1〜10で付けてください。触れている項目は話した強さや好みから付けてください。",
+    "- 触れていない項目も、感想全体の印象から推定して score を付けてください。その場合 tags は空、note は空文字にしてください。",
     "- tags は選択肢の中から、話した内容に合うものだけを選んでください。",
     "- note にはその項目について話した内容を、簡潔で自然な日本語に整えて書いてください。言い淀みや口癖は取り除いてください。",
   ].join("\n");
 }
 
 interface RawCriterionResult {
-  mentioned?: unknown;
   score?: unknown;
   tags?: unknown;
   note?: unknown;
 }
 
 // モデルの出力は responseConstraint があっても信用せず、ここで検証する。
-// 言及された項目だけを返し、言及されなかった項目は未回答のまま
-// ユーザーに入力してもらう（スコアの捏造を記録に残さないため）
+// 不正な項目は捨てて返すので、呼び出し側は全項目揃ったかを isComplete で
+// 確かめ、欠けていればフォームで補ってもらう
 export function parseTastingResponse(
   raw: string,
   criteria: CuppingCriterionDef[],
@@ -78,8 +76,7 @@ export function parseTastingResponse(
 
   return criteria.flatMap((c) => {
     const result = record[c.id];
-    if (result?.mentioned !== true) return [];
-    if (typeof result.score !== "number" || !isCuppingScore(result.score)) {
+    if (typeof result?.score !== "number" || !isCuppingScore(result.score)) {
       return [];
     }
     const tags = Array.isArray(result.tags)

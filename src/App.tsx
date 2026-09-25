@@ -17,7 +17,7 @@ import {
   criteriaForMode,
 } from "./data/cupping";
 import { trackPageView } from "./logic/analytics";
-import { cuppingModeOf } from "./logic/cupping";
+import { cuppingModeOf, isComplete } from "./logic/cupping";
 import {
   diagnose,
   diagnoseFlavor,
@@ -74,7 +74,7 @@ type Screen =
       editing?: { entry: CuppingHistoryEntry; startIndex: number };
       // 情報入力画面から戻ってきた場合、1問目の入力内容を復元する
       initialFirstDraft?: CuppingFirstDraft;
-      // 音声から構造化した部分回答。未回答の項目をフォームで埋めてもらう
+      // 音声から構造化したが一部の項目が欠けた回答。欠けた項目をフォームで埋めてもらう
       voiceAnswers?: CuppingCriterionAnswer[];
     }
   | { name: "voiceCupping"; coffeeInfo: CoffeeInfo; mode: CuppingMode }
@@ -492,14 +492,26 @@ function App() {
       {screen.name === "voiceCupping" && (
         <VoiceCuppingScreen
           criteria={criteriaForMode(screen.mode)}
-          onSummarized={(voiceAnswers) =>
+          onSummarized={(voiceAnswers) => {
+            // 全項目揃えばそのまま保存して結果へ。直したい項目は結果画面の
+            // 編集導線で直せる。モデルの出力が一部不正で欠けた場合だけ、
+            // 欠けた項目をフォームで補ってもらう
+            if (isComplete(voiceAnswers, criteriaForMode(screen.mode))) {
+              completeCupping(
+                voiceAnswers,
+                screen.coffeeInfo,
+                null,
+                screen.mode,
+              );
+              return;
+            }
             setScreen({
               name: "cupping",
               coffeeInfo: screen.coffeeInfo,
               mode: screen.mode,
               voiceAnswers,
-            })
-          }
+            });
+          }}
           onUseForm={() => startCuppingWithInfo(screen.coffeeInfo, screen.mode)}
           onBack={() =>
             setScreen({

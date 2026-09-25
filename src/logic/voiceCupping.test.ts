@@ -8,8 +8,8 @@ import {
 
 const simple = criteriaForMode("simple");
 
-function unmentioned() {
-  return { mentioned: false, score: 5, tags: [], note: "" };
+function estimated(score: number) {
+  return { score, tags: [], note: "" };
 }
 
 describe("buildTastingSchema", () => {
@@ -39,32 +39,26 @@ describe("buildTastingSystemPrompt", () => {
 });
 
 describe("parseTastingResponse", () => {
-  it("言及された項目だけを回答として返す", () => {
+  it("全項目の回答を評価項目の順に返し、メモの前後の空白を除く", () => {
     const raw = JSON.stringify({
-      acidity: {
-        mentioned: true,
-        score: 8,
-        tags: ["レモンのような"],
-        note: " 明るい酸味 ",
-      },
-      sweetness: unmentioned(),
-      mouthfeel: unmentioned(),
-      overall: unmentioned(),
+      overall: estimated(7),
+      mouthfeel: estimated(6),
+      sweetness: estimated(5),
+      acidity: { score: 8, tags: ["レモンのような"], note: " 明るい酸味 " },
     });
-    expect(parseTastingResponse(raw, simple)).toEqual([
-      {
-        criterionId: "acidity",
-        score: 8,
-        tags: ["レモンのような"],
-        note: "明るい酸味",
-      },
-    ]);
+    const answers = parseTastingResponse(raw, simple);
+    expect(answers.map((a) => a.criterionId)).toEqual(simple.map((c) => c.id));
+    expect(answers.find((a) => a.criterionId === "acidity")).toEqual({
+      criterionId: "acidity",
+      score: 8,
+      tags: ["レモンのような"],
+      note: "明るい酸味",
+    });
   });
 
   it("語彙にないタグは除外する", () => {
     const raw = JSON.stringify({
       acidity: {
-        mentioned: true,
         score: 7,
         tags: ["レモンのような", "グレープフルーツ"],
         note: "",
@@ -77,8 +71,8 @@ describe("parseTastingResponse", () => {
 
   it("1〜10の整数でないスコアの項目は捨てる", () => {
     const raw = JSON.stringify({
-      acidity: { mentioned: true, score: 11, tags: [], note: "" },
-      sweetness: { mentioned: true, score: 6.5, tags: [], note: "" },
+      acidity: { score: 11, tags: [], note: "" },
+      sweetness: { score: 6.5, tags: [], note: "" },
     });
     expect(parseTastingResponse(raw, simple)).toEqual([]);
   });
@@ -89,7 +83,7 @@ describe("parseTastingResponse", () => {
 
   it("評価対象外の項目が出力に含まれていても無視する", () => {
     const raw = JSON.stringify({
-      flavor: { mentioned: true, score: 9, tags: [], note: "" },
+      flavor: { score: 9, tags: [], note: "" },
     });
     expect(parseTastingResponse(raw, simple)).toEqual([]);
   });
