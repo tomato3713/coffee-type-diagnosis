@@ -31,8 +31,8 @@ importers:
         specifier: 10.5.0
         version: 10.5.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(storybook@10.5.0(@types/react@19.2.18)(react@19.2.8))(typescript@7.0.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1))
       '@types/dom-chromium-ai':
-        specifier: ^0.0.17
-        version: 0.0.17
+        specifier: ^0.0.18
+        version: 0.0.18
       '@types/dom-speech-recognition':
         specifier: ^0.0.12
         version: 0.0.12
@@ -876,8 +876,8 @@ packages:
   '@types/doctrine@0.0.9':
     resolution: {integrity: sha512-eOIHzCUSH7SMfonMG1LsC2f8vxBFtho6NGBznK41R84YzPuvSBzrhEps33IsQiOW9+VL6NQ9DbjQJznk/S4uRA==}
 
-  '@types/dom-chromium-ai@0.0.17':
-    resolution: {integrity: sha512-UnSAIVKONaY2vTAM4TkPpwdKeGgg3tPCwNP3KxR+U8bLYC2rQU7UrgW9LIVx0B02dKZxuPA6a0Q5wvyW5Rk6nw==}
+  '@types/dom-chromium-ai@0.0.18':
+    resolution: {integrity: sha512-/ZITAMdViQlLmEs56d/ET9qJ42EfnrBrLw5gRB4p0raDoavGDacqP9VITK8wNM0f9bPmnddHZeJ+FWIkWi6JlQ==}
 
   '@types/dom-speech-recognition@0.0.12':
     resolution: {integrity: sha512-SmLovKV3e/J71U5CBmKYe03Q75biuw7jiEWGoO1arc47CjtmxCr+W7cPJcAAwySSJFwr+jWkr/fPVuVuL+D6Dw==}
@@ -2388,7 +2388,7 @@ snapshots:
 
   '@types/doctrine@0.0.9': {}
 
-  '@types/dom-chromium-ai@0.0.17': {}
+  '@types/dom-chromium-ai@0.0.18': {}
 
   '@types/dom-speech-recognition@0.0.12': {}
 
